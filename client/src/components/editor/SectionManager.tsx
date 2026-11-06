@@ -31,9 +31,14 @@ import {
 interface SectionManagerProps {
   data: ResumeData;
   onChange: (updatedData: ResumeData) => void;
+  singleSectionKey?: SectionKey | 'personal' | null;
 }
 
-export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }) => {
+export const SectionManager: React.FC<SectionManagerProps> = ({
+  data,
+  onChange,
+  singleSectionKey,
+}) => {
   const [activeSection, setActiveSection] = useState<string>('personal');
 
   const {
@@ -51,8 +56,8 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
     disabledSections = [],
   } = data;
 
-  const toggleSectionEnabled = (sectionKey: SectionKey, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleSectionEnabled = (sectionKey: SectionKey, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const isCurrentlyDisabled = disabledSections.includes(sectionKey);
     const updatedDisabled = isCurrentlyDisabled
       ? disabledSections.filter((k) => k !== sectionKey)
@@ -64,8 +69,8 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
     });
   };
 
-  const moveSection = (index: number, direction: 'up' | 'down', e: React.MouseEvent) => {
-    e.stopPropagation();
+  const moveSection = (index: number, direction: 'up' | 'down', e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const newOrder = [...sectionsOrder];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newOrder.length) return;
@@ -125,7 +130,7 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
       case 'certifications':
         return { label: 'Certifications & Distinctions', icon: Award, count: certifications.length };
       case 'interests':
-        return { label: 'Centres d\'intérêt', icon: Heart, count: interests.length };
+        return { label: "Centres d'intérêt", icon: Heart, count: interests.length };
       case 'references':
         return { label: 'Références', icon: UserCheck, count: references.length };
       default:
@@ -227,6 +232,104 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
     }
   };
 
+  /* SINGLE SECTION MODE (Used in mobile step-by-step wizard) */
+  if (singleSectionKey) {
+    if (singleSectionKey === 'personal') {
+      return (
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+          <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-800">
+                Informations personnelles
+              </h2>
+              <p className="text-[11px] text-slate-500">Nom, contact, réseaux et photo de profil</p>
+            </div>
+          </div>
+          <PersonalInfoForm
+            data={personalInfo}
+            onChange={(updated) => onChange({ ...data, personalInfo: updated })}
+          />
+        </div>
+      );
+    }
+
+    const secKey = singleSectionKey as SectionKey;
+    const meta = getSectionMetadata(secKey);
+    const Icon = meta.icon;
+    const isEnabled = !disabledSections.includes(secKey);
+    const secIndex = sectionsOrder.indexOf(secKey);
+
+    return (
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                isEnabled ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-400'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="truncate">
+              <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate">
+                {meta.label}
+              </h2>
+              {!isEnabled && (
+                <p className="text-[11px] text-amber-600 font-medium">
+                  Section masquée du CV final
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            {secIndex !== -1 && (
+              <>
+                <button
+                  type="button"
+                  disabled={secIndex === 0}
+                  onClick={(e) => moveSection(secIndex, 'up', e)}
+                  aria-label="Monter cette section"
+                  className="min-h-[44px] min-w-[44px] p-2 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-20"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={secIndex === sectionsOrder.length - 1}
+                  onClick={(e) => moveSection(secIndex, 'down', e)}
+                  aria-label="Descendre cette section"
+                  className="min-h-[44px] min-w-[44px] p-2 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-20"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={(e) => toggleSectionEnabled(secKey, e)}
+              className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                isEnabled
+                  ? 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+            >
+              {isEnabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <span className="hidden sm:inline">{isEnabled ? 'Visible' : 'Masqué'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div>{renderSectionContent(secKey)}</div>
+      </div>
+    );
+  }
+
+  /* FULL ACCORDION MODE (Desktop >= 768px) */
   return (
     <div className="space-y-3 pb-8">
       {/* 1. INFORMATIONS PERSONNELLES (Toujours en tête) */}
@@ -313,31 +416,31 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
                 </div>
               </div>
 
-              {/* Controls (Up, Down, Toggle Eye, Expand) */}
+              {/* Controls (Up, Down, Toggle Eye) */}
               <div className="flex items-center gap-1 shrink-0 ml-2">
                 <button
                   type="button"
                   disabled={index === 0}
                   onClick={(e) => moveSection(index, 'up', e)}
-                  title="Monter la section"
-                  className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                  aria-label="Monter la section"
+                  className="min-h-[40px] min-w-[40px] flex items-center justify-center p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
                 >
-                  <ChevronUp className="w-3.5 h-3.5" />
+                  <ChevronUp className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   disabled={index === sectionsOrder.length - 1}
                   onClick={(e) => moveSection(index, 'down', e)}
-                  title="Descendre la section"
-                  className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                  aria-label="Descendre la section"
+                  className="min-h-[40px] min-w-[40px] flex items-center justify-center p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
                 >
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={(e) => toggleSectionEnabled(key, e)}
-                  title={isEnabled ? 'Masquer la section du CV' : 'Afficher la section sur le CV'}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  aria-label={isEnabled ? 'Masquer la section' : 'Afficher la section'}
+                  className={`min-h-[40px] min-w-[40px] flex items-center justify-center p-1.5 rounded-lg transition-colors ${
                     isEnabled
                       ? 'text-teal-600 hover:bg-teal-50'
                       : 'text-slate-400 hover:bg-slate-200'
@@ -361,7 +464,7 @@ export const SectionManager: React.FC<SectionManagerProps> = ({ data, onChange }
       <button
         type="button"
         onClick={addCustomSection}
-        className="w-full py-3 border-2 border-dashed border-slate-300 hover:border-teal-500 bg-white hover:bg-teal-50/30 text-slate-700 hover:text-teal-800 text-xs font-bold rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+        className="w-full min-h-[48px] py-3.5 border-2 border-dashed border-slate-300 hover:border-teal-500 bg-white hover:bg-teal-50/30 text-slate-700 hover:text-teal-800 text-xs sm:text-sm font-bold rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
       >
         <Plus className="w-4 h-4 text-teal-600" />
         Ajouter une section personnalisée

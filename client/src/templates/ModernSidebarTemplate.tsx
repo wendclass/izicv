@@ -112,28 +112,14 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
             <h3 className="text-xs uppercase font-bold tracking-wider mb-3 pb-1 border-b border-white/30 flex items-center gap-1.5">
               Compétences
             </h3>
-            <div className="space-y-2 text-xs">
+            <div className="flex flex-wrap gap-1.5 text-xs">
               {skills.map((skill) => (
-                <div key={skill.id} className="space-y-1">
-                  <div className="flex justify-between items-center text-[11px] font-medium">
-                    <span>{skill.name}</span>
-                    {skill.level && (
-                      <span className="opacity-80 text-[10px]">{skill.level}/5</span>
-                    )}
-                  </div>
-                  {skill.level ? (
-                    <div className="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-white rounded-full h-1.5 transition-all"
-                        style={{ width: `${(skill.level / 5) * 100}%` }}
-                      />
-                    </div>
-                  ) : (
-                    <span className="inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] mr-1 mb-1">
-                      {skill.name}
-                    </span>
-                  )}
-                </div>
+                <span
+                  key={skill.id}
+                  className="inline-block bg-white/20 px-2 py-0.5 rounded text-[11px] font-medium"
+                >
+                  {skill.name}
+                </span>
               ))}
             </div>
           </div>
@@ -187,7 +173,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
               {references.map((ref) => (
                 <div key={ref.id} className="bg-white/10 p-2 rounded">
                   <div className="font-bold">{ref.name}</div>
-                  <div className="opacity-90 text-[10px]">{ref.role} — {ref.company}</div>
+                  <div className="opacity-90 text-[10px]">{ref.role} : {ref.company}</div>
                   {ref.phone && <div className="text-[9px] opacity-80">{ref.phone}</div>}
                   {ref.email && <div className="text-[9px] opacity-80">{ref.email}</div>}
                 </div>
@@ -251,7 +237,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs font-bold text-slate-900">{exp.title}</span>
                         <span className="text-[10px] font-semibold text-slate-500">
-                          {exp.startDate} — {exp.current ? 'Présent' : exp.endDate || '—'}
+                          {exp.startDate} - {exp.current ? 'Présent' : exp.endDate || '-'}
                         </span>
                       </div>
                       <div className="text-[11px] font-medium" style={{ color: accentColor }}>
@@ -286,7 +272,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs font-bold text-slate-900">{edu.degree}</span>
                         <span className="text-[10px] font-semibold text-slate-500">
-                          {edu.startDate} — {edu.current ? 'En cours' : edu.endDate || '—'}
+                          {edu.startDate} - {edu.current ? 'En cours' : edu.endDate || '-'}
                         </span>
                       </div>
                       <div className="text-[11px] font-medium text-slate-700">
@@ -318,7 +304,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                     <div key={cert.id} className="text-xs flex justify-between items-start">
                       <div>
                         <span className="font-bold text-slate-900">{cert.title}</span>
-                        <span className="text-slate-600 text-[11px]"> — {cert.issuer}</span>
+                        <span className="text-slate-600 text-[11px]"> : {cert.issuer}</span>
                         {cert.description && (
                           <div className="text-[10px] text-slate-500">{cert.description}</div>
                         )}

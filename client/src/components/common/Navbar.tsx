@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigateHome }) =>
               </span>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:block">
-              Créez votre CV parfait en quelques clics
+              Crée ton CV parfait en quelques clics
             </p>
           </div>
         </div>

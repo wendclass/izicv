@@ -137,11 +137,11 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs font-bold text-slate-900">{exp.title}</span>
                       <span className="text-[10px] font-semibold text-slate-500">
-                        {exp.startDate} — {exp.current ? 'Présent' : exp.endDate || '—'}
+                        {exp.startDate} - {exp.current ? 'Présent' : exp.endDate || '-'}
                       </span>
                     </div>
                     <div className="text-[11px] font-semibold" style={{ color: accentColor }}>
-                      {exp.company} {exp.city ? `— ${exp.city}` : ''}
+                      {exp.company} {exp.city ? `• ${exp.city}` : ''}
                     </div>
                     {exp.description && (
                       <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-line mt-1">
@@ -169,7 +169,7 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs font-bold text-slate-900">{edu.degree}</span>
                       <span className="text-[10px] font-semibold text-slate-500">
-                        {edu.startDate} — {edu.current ? 'En cours' : edu.endDate || '—'}
+                        {edu.startDate} - {edu.current ? 'En cours' : edu.endDate || '-'}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-700 font-medium">
@@ -197,15 +197,9 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                 {skills.map((skill) => (
                   <span
                     key={skill.id}
-                    className="text-[11px] font-medium px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200 flex items-center gap-1.5"
+                    className="text-[11px] font-medium px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200 flex items-center"
                   >
                     <span>{skill.name}</span>
-                    {skill.level && (
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: accentColor }}
-                      />
-                    )}
                   </span>
                 ))}
               </div>
@@ -246,7 +240,7 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                   <div key={cert.id} className="flex justify-between items-start text-xs">
                     <div>
                       <span className="font-bold text-slate-900">{cert.title}</span>
-                      <span className="text-slate-600 text-[11px]"> — {cert.issuer}</span>
+                      <span className="text-slate-600 text-[11px]"> : {cert.issuer}</span>
                       {cert.description && (
                         <div className="text-[10px] text-slate-500">{cert.description}</div>
                       )}
@@ -292,7 +286,7 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                 {references.map((ref) => (
                   <div key={ref.id} className="bg-slate-50 p-2 rounded border border-slate-100">
                     <div className="font-bold text-slate-900">{ref.name}</div>
-                    <div className="text-slate-600 text-[11px]">{ref.role} — {ref.company}</div>
+                    <div className="text-slate-600 text-[11px]">{ref.role} : {ref.company}</div>
                     {ref.phone && <div className="text-[10px] text-slate-500">{ref.phone}</div>}
                     {ref.email && <div className="text-[10px] text-slate-500">{ref.email}</div>}
                   </div>

@@ -58,14 +58,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <h4 className="text-xs font-bold text-slate-800">Photo de profil (Optionnelle)</h4>
           <p className="text-[11px] text-slate-500">
             {data.photoUrl
-              ? 'Photo ajoutée. Vous pouvez l\'ajuster ou la supprimer à tout moment.'
-              : 'Ajoutez une photo professionnelle nette et lumineuse.'}
+              ? "Photo ajoutée. Tu peux l'ajuster ou la supprimer à tout moment."
+              : 'Ajoute une photo nette et lumineuse.'}
           </p>
           <div className="flex items-center gap-2 pt-1">
             <button
               type="button"
               onClick={() => setIsPhotoModalOpen(true)}
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800 underline"
+              className="text-xs font-semibold text-teal-700 hover:text-teal-800 underline py-1"
             >
               {data.photoUrl ? 'Modifier / Recadrer' : 'Ajouter une photo'}
             </button>
@@ -73,7 +73,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
               <button
                 type="button"
                 onClick={() => updateField('photoUrl', '')}
-                className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1"
+                className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 py-1"
               >
                 <Trash2 className="w-3 h-3" />
                 Supprimer
@@ -89,10 +89,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <label className="text-xs font-semibold text-slate-700">Prénom</label>
           <input
             type="text"
+            autoCapitalize="words"
             placeholder="ex: Thomas"
             value={data.firstName}
             onChange={(e) => updateField('firstName', e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -100,10 +101,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <label className="text-xs font-semibold text-slate-700">Nom</label>
           <input
             type="text"
+            autoCapitalize="words"
             placeholder="ex: Leroy"
             value={data.lastName}
             onChange={(e) => updateField('lastName', e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -113,10 +115,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           </label>
           <input
             type="text"
+            autoCapitalize="words"
             placeholder="ex: Chef de Projet Digital Senior | Expert UX"
             value={data.title}
             onChange={(e) => updateField('title', e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -127,10 +130,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           </label>
           <input
             type="email"
+            inputMode="email"
             placeholder="thomas.leroy@exemple.fr"
             value={data.email}
             onChange={(e) => updateField('email', e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -141,10 +145,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           </label>
           <input
             type="tel"
+            inputMode="tel"
             placeholder="+33 6 12 34 56 78"
             value={data.phone}
             onChange={(e) => updateField('phone', e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -155,10 +160,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           </label>
           <input
             type="text"
+            autoCapitalize="words"
             placeholder="ex: Paris, Dakar, Bruxelles..."
             value={data.city || ''}
             onChange={(e) => updateField('city', e.target.value)}
-            className="w-full px-3 py-2 text-sm sm:text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 
@@ -169,10 +175,11 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           </label>
           <input
             type="text"
+            autoCapitalize="words"
             placeholder="ex: France, Sénégal, Belgique, Canada..."
             value={data.country || ''}
             onChange={(e) => updateField('country', e.target.value)}
-            className="w-full px-3 py-2 text-sm sm:text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+            className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
           />
         </div>
 

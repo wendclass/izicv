@@ -4,6 +4,7 @@ import { Navbar } from './components/common/Navbar';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { EditorView } from './components/editor/EditorView';
 import { AuthModal } from './components/auth/AuthModal';
+import { ExternalLink } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -61,6 +62,23 @@ const AppContent: React.FC = () => {
           />
         )}
       </main>
+
+      {/* CLASS S SIGNATURE FOOTER (Section 11) */}
+      {/* Logo Class S : emplacement réservé */}
+      <footer className="no-print py-4 px-4 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
+        <span>Un outil signé </span>
+        <span className="font-semibold text-slate-700">Class S</span>
+        <span>, </span>
+        <a
+          href="https://wenclass.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-teal-700 hover:text-teal-800 hover:underline font-semibold inline-flex items-center gap-0.5"
+        >
+          wenclass.com
+          <ExternalLink className="w-3 h-3 ml-0.5" />
+        </a>
+      </footer>
 
       {/* Auth Modal */}
       <AuthModal

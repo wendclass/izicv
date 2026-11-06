@@ -6,12 +6,18 @@ import { TEMPLATES } from '../../templates';
 import {
   ArrowLeft,
   Download,
+  Share2,
   LayoutTemplate,
   Check,
   CheckCircle,
   Loader2,
   Edit3,
+  WifiOff,
+  AlertCircle,
+  RotateCw,
 } from 'lucide-react';
+
+export type SaveStatusType = 'saved' | 'saving' | 'offline' | 'error';
 
 interface EditorToolbarProps {
   title: string;
@@ -20,12 +26,13 @@ interface EditorToolbarProps {
   onTemplateChange: (newTemplate: TemplateId) => void;
   theme: ResumeTheme;
   onThemeChange: (newTheme: ResumeTheme) => void;
-  isSaving: boolean;
+  saveStatus: SaveStatusType;
+  onRetrySync?: () => void;
   onBack: () => void;
   onDownloadPDF: () => void;
   isDownloading: boolean;
-  mobileView: 'form' | 'preview';
-  onMobileViewChange: (view: 'form' | 'preview') => void;
+  onSharePDF?: () => void;
+  isSharing?: boolean;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -35,10 +42,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onTemplateChange,
   theme,
   onThemeChange,
-  isSaving,
+  saveStatus,
+  onRetrySync,
   onBack,
   onDownloadPDF,
   isDownloading,
+  onSharePDF,
+  isSharing = false,
 }) => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -46,12 +56,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   return (
     <div className="no-print bg-white border-b border-slate-200 px-3 sm:px-4 py-2.5 sticky top-16 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-        {/* Left: Back + Title + Save indicator */}
+        {/* Left: Back + Title + Save/Offline indicator */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-teal-800 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-lg transition-colors shrink-0"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-teal-800 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-xl transition-colors shrink-0 cursor-pointer"
             title="Retour au tableau de bord"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -59,7 +69,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </button>
 
           {/* Editable Title */}
-          <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             {isEditingTitle ? (
               <input
                 type="text"
@@ -73,40 +83,66 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             ) : (
               <div
                 onClick={() => setIsEditingTitle(true)}
-                className="flex items-center gap-1 cursor-pointer group truncate"
-                title="Cliquer pour renommer le CV"
+                className="flex items-center gap-1.5 cursor-pointer group truncate"
+                title="Touche pour renommer ton CV"
               >
                 <span className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px]">
                   {title || 'Mon CV'}
                 </span>
-                <Edit3 className="w-3 h-3 text-slate-400 group-hover:text-teal-600 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0" />
+                <Edit3 className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-600 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0" />
               </div>
             )}
 
-            {/* Auto-save status */}
-            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-400 shrink-0">
-              {isSaving ? (
-                <>
+            {/* Auto-save & Network status indicator */}
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] shrink-0">
+              {saveStatus === 'saving' && (
+                <div className="flex items-center gap-1 text-teal-700 font-medium">
                   <Loader2 className="w-3 h-3 animate-spin text-teal-600" />
-                  <span className="hidden md:inline">Sauvegarde...</span>
-                </>
-              ) : (
-                <>
+                  <span className="hidden md:inline">Enregistrement…</span>
+                </div>
+              )}
+              {saveStatus === 'saved' && (
+                <div className="flex items-center gap-1 text-emerald-700 font-medium">
                   <CheckCircle className="w-3 h-3 text-emerald-600" />
-                  <span className="hidden md:inline text-emerald-700 font-medium">Sauvegardé</span>
-                </>
+                  <span className="hidden md:inline">Enregistré</span>
+                </div>
+              )}
+              {saveStatus === 'offline' && (
+                <div
+                  className="flex items-center gap-1 text-amber-700 font-medium bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full"
+                  title="Hors ligne : tes modifications seront envoyées au retour du réseau"
+                >
+                  <WifiOff className="w-3 h-3 text-amber-600 shrink-0" />
+                  <span className="hidden sm:inline">Hors ligne</span>
+                </div>
+              )}
+              {saveStatus === 'error' && (
+                <div className="flex items-center gap-1 text-rose-700 font-medium">
+                  <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                  <span className="hidden md:inline">Erreur</span>
+                  {onRetrySync && (
+                    <button
+                      type="button"
+                      onClick={onRetrySync}
+                      className="inline-flex items-center gap-0.5 text-[10px] underline hover:text-rose-900 cursor-pointer"
+                    >
+                      <RotateCw className="w-2.5 h-2.5" />
+                      Réessayer
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right: Customization Controls (Template, Color, Font, Download PDF) */}
+        {/* Right: Customization Controls (Template, Color, Font, Share, Download PDF) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Template Button */}
           <button
             type="button"
             onClick={() => setIsTemplateModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
             title="Changer de modèle"
           >
             <LayoutTemplate className="w-3.5 h-3.5 text-teal-600" />
@@ -125,17 +161,35 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             onChange={(font: FontFamilyId) => onThemeChange({ ...theme, fontFamily: font })}
           />
 
-          {/* Download PDF Button (Prominent on desktop) */}
+          {/* Share Button (desktop / tablet) */}
+          {onSharePDF && (
+            <button
+              type="button"
+              onClick={onSharePDF}
+              disabled={isSharing || isDownloading}
+              className="hidden sm:inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              title="Partager le PDF"
+            >
+              {isSharing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Share2 className="w-3.5 h-3.5 text-teal-700" />
+              )}
+              <span>Partager</span>
+            </button>
+          )}
+
+          {/* Download PDF Button (desktop) */}
           <button
             type="button"
             onClick={onDownloadPDF}
-            disabled={isDownloading}
-            className="hidden md:inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 rounded-xl shadow-md shadow-teal-600/20 transition-all cursor-pointer disabled:opacity-50"
+            disabled={isDownloading || isSharing}
+            className="hidden md:inline-flex min-h-[40px] items-center gap-2 px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 rounded-xl shadow-md shadow-teal-600/20 transition-all cursor-pointer disabled:opacity-50"
           >
             {isDownloading ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Export...</span>
+                <span>Export en cours...</span>
               </>
             ) : (
               <>
@@ -149,7 +203,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
 
       {/* Template Selection Modal */}
       {isTemplateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 border border-slate-100 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -157,7 +211,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                   Choisir un modèle de CV
                 </h3>
                 <p className="text-[11px] sm:text-xs text-slate-500">
-                  Toutes vos données sont conservées lors du changement de modèle.
+                  Toutes tes données sont conservées lors du changement de modèle.
                 </p>
               </div>
             </div>
@@ -202,7 +256,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               <button
                 type="button"
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="min-h-[44px] px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
               >
                 Fermer
               </button>

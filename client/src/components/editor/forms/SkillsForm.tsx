@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SkillItem } from '../../../types/cv';
-import { Plus, X, Wrench, Sparkles, Tag } from 'lucide-react';
+import { Plus, X, Wrench, Tag, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface SkillsFormProps {
   items: SkillItem[];
@@ -9,7 +9,6 @@ interface SkillsFormProps {
 
 export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) => {
   const [newSkillName, setNewSkillName] = useState('');
-  const [newSkillLevel, setNewSkillLevel] = useState<number>(4);
   const [selectedCategory, setSelectedCategory] = useState<string>('Compétences clés');
 
   const defaultCategories = [
@@ -27,7 +26,6 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
     const newItem: SkillItem = {
       id: 'skill-' + Date.now(),
       name: newSkillName.trim(),
-      level: newSkillLevel,
       category: selectedCategory,
     };
 
@@ -39,13 +37,19 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
     onChange(items.filter((item) => item.id !== id));
   };
 
-  const updateSkillLevel = (id: string, level: number) => {
-    onChange(items.map((item) => (item.id === id ? { ...item, level } : item)));
+  const moveSkill = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const newItems = [...items];
+    const temp = newItems[index];
+    newItems[index] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    onChange(newItems);
   };
 
-  // Group skills by category for clear presentation
+  // Group skills by category for presentation
   const groupedSkills = items.reduce((acc, skill) => {
-    const cat = skill.category || 'Général';
+    const cat = skill.category || 'Compétences clés';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(skill);
     return acc;
@@ -56,7 +60,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
       {/* Add New Skill Input Box */}
       <form onSubmit={handleAddSkill} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
         <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-          <Wrench className="w-3.5 h-3.5 text-teal-600" />
+          <Wrench className="w-4 h-4 text-teal-600" />
           Ajouter une compétence
         </div>
 
@@ -64,10 +68,11 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
           <div className="sm:col-span-2">
             <input
               type="text"
+              autoCapitalize="words"
               placeholder="ex: Figma, React, Gestion de budget..."
               value={newSkillName}
               onChange={(e) => setNewSkillName(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+              className="w-full px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
             />
           </div>
 
@@ -75,7 +80,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden text-slate-700"
+              className="w-full px-2.5 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden text-slate-700"
             >
               {defaultCategories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -86,72 +91,71 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ items = [], onChange }) 
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-slate-600">Niveau :</span>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((lvl) => (
-                <button
-                  key={lvl}
-                  type="button"
-                  onClick={() => setNewSkillLevel(lvl)}
-                  className={`w-5 h-5 rounded-full text-[10px] font-bold transition-all ${
-                    newSkillLevel >= lvl
-                      ? 'bg-teal-600 text-white shadow-2xs'
-                      : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                  }`}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={!newSkillName.trim()}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Ajouter
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={!newSkillName.trim()}
+          className="w-full min-h-[48px] py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+        >
+          <Plus className="w-4 h-4" />
+          Ajouter la compétence
+        </button>
       </form>
 
       {/* Display skills by categories */}
       {items.length === 0 ? (
         <p className="text-xs text-slate-400 text-center py-4">
-          Aucune compétence ajoutée. Ajoutez vos savoir-faire ci-dessus.
+          Aucune compétence ajoutée. Ajoute tes savoir-faire ci-dessus.
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {Object.entries(groupedSkills).map(([category, skills]) => (
-            <div key={category} className="space-y-1.5">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <Tag className="w-3 h-3 text-teal-600" />
+            <div key={category} className="space-y-2">
+              <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-teal-600" />
                 {category}
               </div>
               <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <div
-                    key={skill.id}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs shadow-2xs text-slate-800 group"
-                  >
-                    <span className="font-medium">{skill.name}</span>
-                    {skill.level && (
-                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1 rounded">
-                        {skill.level}/5
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeSkill(skill.id)}
-                      className="text-slate-400 hover:text-rose-600 transition-colors ml-0.5"
+                {skills.map((skill) => {
+                  const itemIndex = items.findIndex((it) => it.id === skill.id);
+                  return (
+                    <div
+                      key={skill.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs shadow-2xs text-slate-800"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="font-semibold">{skill.name}</span>
+
+                      {/* Reorder Up/Down */}
+                      <div className="flex items-center gap-0.5 ml-1 border-l border-slate-200 pl-1.5">
+                        <button
+                          type="button"
+                          disabled={itemIndex <= 0}
+                          onClick={() => moveSkill(itemIndex, 'up')}
+                          aria-label={`Monter la compétence ${skill.name}`}
+                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={itemIndex >= items.length - 1}
+                          onClick={() => moveSkill(itemIndex, 'down')}
+                          aria-label={`Descendre la compétence ${skill.name}`}
+                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill.id)}
+                          aria-label={`Supprimer la compétence ${skill.name}`}
+                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors ml-0.5"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

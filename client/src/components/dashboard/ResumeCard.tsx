@@ -66,7 +66,7 @@ export const ResumeCard: React.FC<ResumeCardProps> = ({
         {/* Top Badges */}
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white shadow-2xs text-slate-700 border border-slate-200/80">
-            {template.name.split('—')[0]}
+            {template.name.split(':')[0]}
           </span>
           <span
             className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-2xs"

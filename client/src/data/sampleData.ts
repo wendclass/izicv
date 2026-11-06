@@ -98,7 +98,7 @@ export const SAMPLE_RESUME_DATA: ResumeData = {
       startDate: '2017',
       endDate: '2019',
       current: false,
-      description: 'Mention Très Bien — Major de promotion.',
+      description: 'Mention Très Bien, major de promotion.',
     },
     {
       id: 'edu-2',
@@ -112,12 +112,12 @@ export const SAMPLE_RESUME_DATA: ResumeData = {
     },
   ],
   skills: [
-    { id: 'sk-1', name: 'Gestion de projet Agile / Scrum', category: 'Gestion de projet', level: 5 },
-    { id: 'sk-2', name: 'UX/UI & Prototypage (Figma)', category: 'Design & Produit', level: 4 },
-    { id: 'sk-3', name: 'Marketing Digital (SEO/SEA/CRM)', category: 'Marketing', level: 5 },
-    { id: 'sk-4', name: 'Analyse de données (Google Analytics 4)', category: 'Data & Analyse', level: 4 },
-    { id: 'sk-5', name: 'Communication & Leadership', category: 'Soft Skills', level: 5 },
-    { id: 'sk-6', name: 'HTML / CSS de base', category: 'Technique', level: 3 },
+    { id: 'sk-1', name: 'Gestion de projet Agile / Scrum', category: 'Gestion de projet' },
+    { id: 'sk-2', name: 'UX/UI & Prototypage (Figma)', category: 'Design & Produit' },
+    { id: 'sk-3', name: 'Marketing Digital (SEO/SEA/CRM)', category: 'Marketing' },
+    { id: 'sk-4', name: 'Analyse de données (Google Analytics 4)', category: 'Data & Analyse' },
+    { id: 'sk-5', name: 'Communication & Leadership', category: 'Soft Skills' },
+    { id: 'sk-6', name: 'HTML / CSS de base', category: 'Technique' },
   ],
   skillGroups: [
     {
@@ -133,7 +133,7 @@ export const SAMPLE_RESUME_DATA: ResumeData = {
   ],
   languages: [
     { id: 'lang-1', language: 'Français', level: 'Langue maternelle' },
-    { id: 'lang-2', language: 'Anglais', level: 'Courant (C1 — Professionnel)' },
+    { id: 'lang-2', language: 'Anglais', level: 'Courant (C1)' },
     { id: 'lang-3', language: 'Espagnol', level: 'Intermédiaire (B1)' },
   ],
   certifications: [

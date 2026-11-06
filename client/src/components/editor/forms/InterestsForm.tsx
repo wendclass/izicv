@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { InterestItem } from '../../../types/cv';
-import { Plus, X, Heart } from 'lucide-react';
+import { Plus, X, Heart, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface InterestsFormProps {
   items: InterestItem[];
@@ -27,46 +27,78 @@ export const InterestsForm: React.FC<InterestsFormProps> = ({ items = [], onChan
     onChange(items.filter((item) => item.id !== id));
   };
 
+  const moveInterest = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const newItems = [...items];
+    const temp = newItems[index];
+    newItems[index] = newItems[targetIndex];
+    newItems[targetIndex] = temp;
+    onChange(newItems);
+  };
+
   return (
-    <div className="space-y-3">
-      <form onSubmit={handleAdd} className="flex gap-2">
+    <div className="space-y-4">
+      <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
+          autoCapitalize="words"
           placeholder="ex: Photographie, Semi-marathon, Bénévolat..."
           value={newInterest}
           onChange={(e) => setNewInterest(e.target.value)}
-          className="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+          className="flex-1 px-3 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
         />
         <button
           type="submit"
           disabled={!newInterest.trim()}
-          className="inline-flex items-center gap-1 px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
+          className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           Ajouter
         </button>
       </form>
 
       {items.length === 0 ? (
-        <p className="text-xs text-slate-400 text-center py-2">
-          Aucun centre d'intérêt renseigné.
+        <p className="text-xs text-slate-400 text-center py-3">
+          Aucun centre d'intérêt renseigné. Ajoute tes loisirs ci-dessus.
         </p>
       ) : (
         <div className="flex flex-wrap gap-2 pt-1">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <span
               key={item.id}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded-full text-xs font-medium"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-800 rounded-xl text-xs font-semibold shadow-2xs"
             >
-              <Heart className="w-3 h-3 text-rose-500 fill-rose-500/20" />
+              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20 shrink-0" />
               <span>{item.name}</span>
-              <button
-                type="button"
-                onClick={() => removeInterest(item.id)}
-                className="text-slate-400 hover:text-rose-600 ml-1"
-              >
-                <X className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-0.5 ml-1 border-l border-slate-200 pl-1.5">
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={() => moveInterest(index, 'up')}
+                  aria-label="Monter ce centre d'intérêt"
+                  className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={index === items.length - 1}
+                  onClick={() => moveInterest(index, 'down')}
+                  aria-label="Descendre ce centre d'intérêt"
+                  className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-20"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeInterest(item.id)}
+                  aria-label="Supprimer ce centre d'intérêt"
+                  className="p-1 text-slate-400 hover:text-rose-600 ml-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </span>
           ))}
         </div>

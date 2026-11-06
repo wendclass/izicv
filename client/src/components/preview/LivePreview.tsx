@@ -70,7 +70,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
       <div className="no-print bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs text-slate-700 shrink-0 z-10 shadow-xs">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <span className="font-bold text-slate-900 truncate text-[11px] sm:text-xs">
-            {templateDef.name.split('—')[0]}
+            {templateDef.name.split(':')[0]}
           </span>
           <span className="hidden xs:inline-flex items-center gap-1 text-[10px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full font-semibold border border-teal-200">
             <Eye className="w-2.5 h-2.5" />

@@ -46,11 +46,11 @@ export const CreateResumeModal: React.FC<CreateResumeModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title Input */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700">Titre de votre CV</label>
+            <label className="text-xs font-semibold text-slate-700">Titre de ton CV</label>
             <input
               type="text"
               required
-              placeholder="ex: CV Chef de Projet — 2026"
+              placeholder="ex: CV Chef de Projet - 2026"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden font-medium"
@@ -77,7 +77,7 @@ export const CreateResumeModal: React.FC<CreateResumeModalProps> = ({
                       <span className="text-[10px] font-bold text-slate-500">{tmpl.badge}</span>
                       {isSelected && <Check className="w-3.5 h-3.5 text-teal-600" />}
                     </div>
-                    <div className="text-xs font-bold text-slate-900">{tmpl.name.split('—')[0]}</div>
+                    <div className="text-xs font-bold text-slate-900">{tmpl.name.split(':')[0]}</div>
                     <div className="text-[10px] text-slate-500 mt-1 line-clamp-2">
                       {tmpl.description}
                     </div>
