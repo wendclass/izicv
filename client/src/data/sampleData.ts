@@ -1,0 +1,202 @@
+import { ResumeData } from '../types/cv';
+
+export const EMPTY_RESUME_DATA: ResumeData = {
+  personalInfo: {
+    firstName: '',
+    lastName: '',
+    title: '',
+    email: '',
+    phone: '',
+    city: '',
+    country: '',
+    linkedin: '',
+    website: '',
+    github: '',
+    photoUrl: '',
+    photoZoom: 1,
+  },
+  profileSummary: '',
+  experiences: [],
+  educations: [],
+  skills: [],
+  skillGroups: [],
+  languages: [],
+  certifications: [],
+  interests: [],
+  references: [],
+  customSections: [],
+  sectionsOrder: [
+    'profile',
+    'experience',
+    'education',
+    'skills',
+    'languages',
+    'certifications',
+    'interests',
+    'references',
+  ],
+  disabledSections: [],
+};
+
+export const SAMPLE_RESUME_DATA: ResumeData = {
+  personalInfo: {
+    firstName: 'Thomas',
+    lastName: 'Leroy',
+    title: 'Chef de Projet Digital & Marketing',
+    email: 'thomas.leroy@exemple.fr',
+    phone: '+33 6 12 34 56 78',
+    city: 'Paris',
+    country: 'France',
+    linkedin: 'linkedin.com/in/thomasleroy',
+    website: 'thomasleroy.design',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    photoZoom: 1,
+  },
+  profileSummary:
+    "Professionnel dynamique et orienté résultats avec plus de 5 ans d'expérience dans la gestion de projets digitaux et l'optimisation de l'expérience utilisateur. Passionné par l'innovation, la coordination d'équipes pluridisciplinaires et la livraison de solutions à fort impact.",
+  experiences: [
+    {
+      id: 'exp-1',
+      title: 'Chef de Projet Digital Senior',
+      company: 'Agence Horizon Numérique',
+      city: 'Paris',
+      startDate: '2022-03',
+      endDate: '',
+      current: true,
+      description:
+        '• Pilotage de bout en bout de 12+ projets web et mobiles pour des clients grands comptes.\n• Augmentation moyenne du taux de conversion client de +28% grâce à des refontes UX/UI ciblées.\n• Management agile d\'une équipe de 8 développeurs, designers et spécialistes SEO.',
+    },
+    {
+      id: 'exp-2',
+      title: 'Chargé de Marketing Digital & Communication',
+      company: 'Innovatech Solutions',
+      city: 'Lyon',
+      startDate: '2019-09',
+      endDate: '2022-02',
+      current: false,
+      description:
+        '• Déploiement de campagnes multicanales (SEO, SEA, réseaux sociaux) générant +45% de leads qualifiés.\n• Refonte du site vitrine et mise en place d\'un CRM HubSpot automatisé.\n• Rédaction d\'articles de blog et de livres blancs spécialisés.',
+    },
+    {
+      id: 'exp-3',
+      title: 'Assistant Chef de Produit (Stage)',
+      company: 'StartUp Studio',
+      city: 'Lille',
+      startDate: '2019-01',
+      endDate: '2019-07',
+      current: false,
+      description:
+        '• Veille concurrentielle et analyse des retours utilisateurs pour la roadmap produit.\n• Tests QA et coordination des livraisons hebdomadaires.',
+    },
+  ],
+  educations: [
+    {
+      id: 'edu-1',
+      degree: 'Master 2 Management de Projets Digitaux',
+      school: 'KEDGE Business School',
+      city: 'Paris',
+      startDate: '2017',
+      endDate: '2019',
+      current: false,
+      description: 'Mention Très Bien — Major de promotion.',
+    },
+    {
+      id: 'edu-2',
+      degree: 'Licence Information & Communication',
+      school: 'Université Paris Nanterre',
+      city: 'Paris',
+      startDate: '2014',
+      endDate: '2017',
+      current: false,
+      description: 'Spécialité Médias Numériques et Stratégie de Marque.',
+    },
+  ],
+  skills: [
+    { id: 'sk-1', name: 'Gestion de projet Agile / Scrum', category: 'Gestion de projet', level: 5 },
+    { id: 'sk-2', name: 'UX/UI & Prototypage (Figma)', category: 'Design & Produit', level: 4 },
+    { id: 'sk-3', name: 'Marketing Digital (SEO/SEA/CRM)', category: 'Marketing', level: 5 },
+    { id: 'sk-4', name: 'Analyse de données (Google Analytics 4)', category: 'Data & Analyse', level: 4 },
+    { id: 'sk-5', name: 'Communication & Leadership', category: 'Soft Skills', level: 5 },
+    { id: 'sk-6', name: 'HTML / CSS de base', category: 'Technique', level: 3 },
+  ],
+  skillGroups: [
+    {
+      id: 'sg-1',
+      categoryName: 'Gestion & Stratégie',
+      skills: ['Agile / Scrum', 'Roadmap Produit', 'Budgétisation', 'KPIs & Data'],
+    },
+    {
+      id: 'sg-2',
+      categoryName: 'Outils & Design',
+      skills: ['Figma', 'Notion', 'Jira / Trello', 'HubSpot', 'Google Analytics'],
+    },
+  ],
+  languages: [
+    { id: 'lang-1', language: 'Français', level: 'Langue maternelle' },
+    { id: 'lang-2', language: 'Anglais', level: 'Courant (C1 — Professionnel)' },
+    { id: 'lang-3', language: 'Espagnol', level: 'Intermédiaire (B1)' },
+  ],
+  certifications: [
+    {
+      id: 'cert-1',
+      title: 'Scrum Master Certifié (PSM I)',
+      issuer: 'Scrum.org',
+      date: '2023',
+      description: 'Certification internationale de facilitation agile.',
+    },
+    {
+      id: 'cert-2',
+      title: 'Google Analytics Individual Qualification (GA4)',
+      issuer: 'Google',
+      date: '2022',
+      description: 'Certification officielle sur l\'analyse avancée des métriques.',
+    },
+  ],
+  interests: [
+    { id: 'int-1', name: 'Photographie de rue & voyage' },
+    { id: 'int-2', name: 'Course à pied (Semi-marathon de Paris 2023)' },
+    { id: 'int-3', name: 'Nouvelles technologies & IA' },
+  ],
+  references: [
+    {
+      id: 'ref-1',
+      name: 'Sophie Martin',
+      role: 'Directrice des Opérations',
+      company: 'Agence Horizon Numérique',
+      email: 's.martin@horizon-num.fr',
+      phone: '+33 6 98 76 54 32',
+    },
+  ],
+  customSections: [],
+  sectionsOrder: [
+    'profile',
+    'experience',
+    'education',
+    'skills',
+    'languages',
+    'certifications',
+    'interests',
+    'references',
+  ],
+  disabledSections: [],
+};
+
+export const COLOR_PALETTES = [
+  { name: 'Bleu Océan', hex: '#0284c7', textClass: 'text-sky-600' },
+  { name: 'Teal Moderne', hex: '#0d9488', textClass: 'text-teal-600' },
+  { name: 'Indigo Élégant', hex: '#4f46e5', textClass: 'text-indigo-600' },
+  { name: 'Bleu Nuit', hex: '#1e3a8a', textClass: 'text-blue-900' },
+  { name: 'Émeraude', hex: '#059669', textClass: 'text-emerald-600' },
+  { name: 'Anthracite', hex: '#334155', textClass: 'text-slate-700' },
+  { name: 'Bourgogne', hex: '#9f1239', textClass: 'text-rose-800' },
+  { name: 'Ambre Chaud', hex: '#d97706', textClass: 'text-amber-600' },
+  { name: 'Violet Royal', hex: '#7c3aed', textClass: 'text-violet-600' },
+  { name: 'Terracotta', hex: '#c2410c', textClass: 'text-orange-700' },
+];
+
+export const FONT_OPTIONS = [
+  { id: 'inter', name: 'Inter (Moderne & Net)', family: 'Inter, sans-serif' },
+  { id: 'jakarta', name: 'Plus Jakarta Sans (Professionnel & Aéré)', family: '"Plus Jakarta Sans", sans-serif' },
+  { id: 'montserrat', name: 'Montserrat (Dynamique & Géométrique)', family: 'Montserrat, sans-serif' },
+  { id: 'merriweather', name: 'Merriweather (Classique & Élégant Serif)', family: 'Merriweather, serif' },
+];

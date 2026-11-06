@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+client/dist/
+server/dist/
+dist/
+
+# Vercel
+.vercel/
+
+# Database & local data
+data/*.json
+!data/.gitkeep
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs and temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.b64
+*.pdf
+.DS_Store
+Thumbs.db
