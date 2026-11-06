@@ -153,6 +153,193 @@ router.get('/audit-logs', adminAuthMiddleware, (req: AdminRequest, res: Response
   res.json({ logs });
 });
 
+// GET /api/admin/users (Section 4.2)
+// Returns sanitized list of users with stats
+router.get('/users', adminAuthMiddleware, (req: AdminRequest, res: Response) => {
+  db.createAuditLog({
+    action: 'view_users_list',
+    target_type: 'users',
+    details: 'Consultation de la liste des utilisateurs',
+  });
+
+  const users = db.getAllUsers();
+  const allResumes = db.getAllResumes();
+  const allEvents = db.getEvents();
+
+  const sanitizedUsers = users.map((u) => {
+    const userResumes = allResumes.filter((r) => r.user_id === u.id);
+    const userEvents = allEvents.filter((e) => e.user_id === u.id);
+    const pdfExports = userEvents.filter((e) => e.event_name === 'pdf_telecharge').length;
+
+    // Detect most frequent device
+    const deviceCounts: Record<string, number> = {};
+    userEvents.forEach((e) => {
+      if (e.device_type && e.device_type !== 'unknown') {
+        deviceCounts[e.device_type] = (deviceCounts[e.device_type] || 0) + 1;
+      }
+    });
+    let mostFrequentDevice = 'Inconnu';
+    let maxDeviceCount = 0;
+    Object.entries(deviceCounts).forEach(([dev, count]) => {
+      if (count > maxDeviceCount) {
+        maxDeviceCount = count;
+        mostFrequentDevice = dev;
+      }
+    });
+
+    // Detect most frequent country
+    const countryCounts: Record<string, number> = {};
+    userEvents.forEach((e) => {
+      if (e.country && e.country !== 'Inconnu') {
+        countryCounts[e.country] = (countryCounts[e.country] || 0) + 1;
+      }
+    });
+    let mostFrequentCountry = 'Inconnu';
+    let maxCountryCount = 0;
+    Object.entries(countryCounts).forEach(([c, count]) => {
+      if (count > maxCountryCount) {
+        maxCountryCount = count;
+        mostFrequentCountry = c;
+      }
+    });
+
+    return {
+      id: u.id,
+      full_name: u.full_name,
+      email: u.email,
+      statut: u.statut || 'actif',
+      methode_connexion: u.methode_connexion || 'email',
+      created_at: u.created_at,
+      derniere_connexion: u.derniere_connexion || u.created_at,
+      cv_count: userResumes.length,
+      pdf_exports_count: pdfExports,
+      most_frequent_device: mostFrequentDevice,
+      most_frequent_country: mostFrequentCountry,
+    };
+  });
+
+  res.json({ users: sanitizedUsers });
+});
+
+// GET /api/admin/users/:id (Section 4.3 Fiche utilisateur)
+router.get('/users/:id', adminAuthMiddleware, (req: AdminRequest, res: Response): void => {
+  const { id } = req.params;
+  const user = db.findUserById(id);
+
+  if (!user) {
+    res.status(404).json({ error: 'Utilisateur introuvable' });
+    return;
+  }
+
+  db.createAuditLog({
+    action: 'view_user_profile',
+    target_type: 'user',
+    target_id: user.id,
+    details: `Consultation de la fiche utilisateur (${user.email})`,
+  });
+
+  const resumes = db.findResumesByUserId(user.id).map((r) => {
+    let parsedData: any = {};
+    try {
+      parsedData = JSON.parse(r.data);
+    } catch {
+      parsedData = {};
+    }
+    return {
+      id: r.id,
+      title: r.title,
+      template_id: r.template_id,
+      theme_color: r.theme_color,
+      font_family: r.font_family,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      data: parsedData,
+    };
+  });
+
+  const events = db.getUserEvents(user.id);
+
+  res.json({
+    user: {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      statut: user.statut || 'actif',
+      methode_connexion: user.methode_connexion || 'email',
+      created_at: user.created_at,
+      derniere_connexion: user.derniere_connexion || user.created_at,
+      consentement_confidentialite_le: user.consentement_confidentialite_le,
+    },
+    resumes,
+    events,
+  });
+});
+
+// GET /api/admin/resumes/:id (Lecture seule d'un CV)
+router.get('/resumes/:id', adminAuthMiddleware, (req: AdminRequest, res: Response): void => {
+  const { id } = req.params;
+  const resume = db.findResumeById(id);
+
+  if (!resume) {
+    res.status(404).json({ error: 'CV introuvable' });
+    return;
+  }
+
+  const owner = db.findUserById(resume.user_id);
+
+  db.createAuditLog({
+    action: 'view_cv',
+    target_type: 'resume',
+    target_id: resume.id,
+    details: `Consultation en lecture seule du CV "${resume.title}" (utilisateur: ${owner?.email || resume.user_id})`,
+  });
+
+  let parsedData: any = {};
+  try {
+    parsedData = JSON.parse(resume.data);
+  } catch {
+    parsedData = {};
+  }
+
+  res.json({
+    resume: {
+      id: resume.id,
+      title: resume.title,
+      template_id: resume.template_id,
+      theme_color: resume.theme_color,
+      font_family: resume.font_family,
+      created_at: resume.created_at,
+      updated_at: resume.updated_at,
+      data: parsedData,
+    },
+    owner: owner
+      ? {
+          id: owner.id,
+          full_name: owner.full_name,
+          email: owner.email,
+        }
+      : null,
+  });
+});
+
+// POST /api/admin/log-action (Enregistrement d'action client dans le journal d'audit)
+router.post('/log-action', adminAuthMiddleware, (req: AdminRequest, res: Response): void => {
+  const { action, target_type, target_id, details } = req.body;
+  if (!action) {
+    res.status(400).json({ error: 'Action requise' });
+    return;
+  }
+
+  db.createAuditLog({
+    action,
+    target_type,
+    target_id,
+    details,
+  });
+
+  res.json({ success: true });
+});
+
 // GET /api/admin/settings
 router.get('/settings', adminAuthMiddleware, (req: AdminRequest, res: Response) => {
   res.json({

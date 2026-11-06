@@ -201,9 +201,30 @@ class JsonDatabase {
     return [...this.data.users];
   }
 
+  updateUser(id: string, updates: Partial<UserRow>): UserRow | null {
+    const idx = this.data.users.findIndex((u) => u.id === id);
+    if (idx === -1) return null;
+    this.data.users[idx] = {
+      ...this.data.users[idx],
+      ...updates,
+    };
+    this.save();
+    return this.data.users[idx];
+  }
+
   // All Resumes (Admin only)
   getAllResumes(): ResumeRow[] {
     return [...this.data.resumes];
+  }
+
+  findResumeById(id: string): ResumeRow | undefined {
+    return this.data.resumes.find((r) => r.id === id);
+  }
+
+  getUserEvents(userId: string): EventRow[] {
+    return this.data.events
+      .filter((e) => e.user_id === userId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 }
 

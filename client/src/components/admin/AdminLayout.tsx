@@ -14,17 +14,20 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '../../contexts/AdminContext';
 import { AuditLogSection } from './AuditLogSection';
+import { UsersListSection } from './UsersListSection';
+import { UserDetailSection } from './UserDetailSection';
 
 type AdminSection = 'overview' | 'users' | 'activity' | 'audit' | 'settings';
 
 export const AdminLayout: React.FC = () => {
   const { adminEmail, logout } = useAdmin();
-  const [currentSection, setCurrentSection] = useState<AdminSection>('audit');
+  const [currentSection, setCurrentSection] = useState<AdminSection>('users');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard, phase: 'Phase 3' },
-    { id: 'users', label: 'Utilisateurs', icon: Users, phase: 'Phase 2' },
+    { id: 'users', label: 'Utilisateurs', icon: Users, phase: 'Actif' },
     { id: 'activity', label: 'Activité', icon: Activity, phase: 'Phase 3' },
     { id: 'audit', label: "Journal d'audit", icon: ShieldAlert, phase: 'Actif' },
     { id: 'settings', label: 'Réglages', icon: Settings, phase: 'Actif' },
@@ -32,6 +35,7 @@ export const AdminLayout: React.FC = () => {
 
   const handleNavClick = (sectionId: AdminSection) => {
     setCurrentSection(sectionId);
+    setSelectedUserId(null);
     setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -210,31 +214,19 @@ export const AdminLayout: React.FC = () => {
         )}
 
         {currentSection === 'users' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Utilisateurs</h2>
-                <p className="text-xs sm:text-sm text-slate-500">Liste complète, recherche instantanée et fiches utilisateurs.</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
-              <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-700">
-                <Users className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-800">Module prévu pour la Phase 2</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                La gestion des utilisateurs, la consultation des CV en lecture seule et le téléchargement PDF seront déployés lors de la prochaine étape.
-              </p>
-              <button
-                type="button"
-                onClick={() => setCurrentSection('audit')}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:underline pt-2 cursor-pointer"
-              >
-                <span>Consulter le journal d'audit actuel</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+          selectedUserId ? (
+            <UserDetailSection
+              userId={selectedUserId}
+              onBack={() => setSelectedUserId(null)}
+            />
+          ) : (
+            <UsersListSection
+              onSelectUser={(userId) => {
+                setSelectedUserId(userId);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )
         )}
 
         {currentSection === 'activity' && (
