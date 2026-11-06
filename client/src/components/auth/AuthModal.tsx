@@ -371,12 +371,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <span className="font-semibold text-slate-600">Class S</span>
           <span> : </span>
           <a
-            href="https://wenclass.com"
+            href="https://wendclass.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-teal-700 hover:text-teal-800 hover:underline font-semibold inline-flex items-center gap-0.5"
           >
-            wenclass.com
+            wendclass.com
             <ExternalLink className="w-2.5 h-2.5" />
           </a>
         </div>

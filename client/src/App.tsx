@@ -70,12 +70,12 @@ const AppContent: React.FC = () => {
         <span className="font-semibold text-slate-700">Class S</span>
         <span>, </span>
         <a
-          href="https://wenclass.com"
+          href="https://wendclass.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-teal-700 hover:text-teal-800 hover:underline font-semibold inline-flex items-center gap-0.5"
         >
-          wenclass.com
+          wendclass.com
           <ExternalLink className="w-3 h-3 ml-0.5" />
         </a>
       </footer>
