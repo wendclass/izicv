@@ -29,8 +29,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigateHome }) =>
               <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-teal-700 to-teal-500 bg-clip-text text-transparent">
                 iziCV
               </span>
-              <span className="text-[9px] sm:text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-                Pro
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-teal-50/80 text-amber-600 border border-teal-300 shadow-xs tracking-wider">
+                PRO
               </span>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:block">
