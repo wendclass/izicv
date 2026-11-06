@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { initDB } from './db.js';
 import authRoutes from './routes/auth.js';
 import resumeRoutes from './routes/resumes.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

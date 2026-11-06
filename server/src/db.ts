@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const isVercel = Boolean(process.env.VERCEL);
 const dataDir = isVercel ? path.join('/tmp', 'data') : path.resolve(process.cwd(), 'data');
@@ -19,6 +20,10 @@ export interface UserRow {
   password_hash: string;
   full_name: string;
   created_at: string;
+  statut?: 'actif' | 'suspendu';
+  derniere_connexion?: string;
+  methode_connexion?: 'google' | 'email';
+  consentement_confidentialite_le?: string;
 }
 
 export interface ResumeRow {
@@ -33,13 +38,35 @@ export interface ResumeRow {
   updated_at: string;
 }
 
+export interface AdminAuditLogRow {
+  id: string;
+  action: string;
+  target_type?: string;
+  target_id?: string;
+  details?: string;
+  created_at: string;
+}
+
+export interface EventRow {
+  id: string;
+  user_id?: string;
+  session_id?: string;
+  event_name: string;
+  properties?: Record<string, any>;
+  device_type?: 'android' | 'ios' | 'desktop' | 'unknown';
+  country?: string;
+  created_at: string;
+}
+
 interface DBSchema {
   users: UserRow[];
   resumes: ResumeRow[];
+  admin_audit_logs: AdminAuditLogRow[];
+  events: EventRow[];
 }
 
 class JsonDatabase {
-  private data: DBSchema = { users: [], resumes: [] };
+  private data: DBSchema = { users: [], resumes: [], admin_audit_logs: [], events: [] };
 
   constructor() {
     this.load();
@@ -52,12 +79,14 @@ class JsonDatabase {
         this.data = JSON.parse(raw);
         if (!this.data.users) this.data.users = [];
         if (!this.data.resumes) this.data.resumes = [];
+        if (!this.data.admin_audit_logs) this.data.admin_audit_logs = [];
+        if (!this.data.events) this.data.events = [];
       } else {
         this.save();
       }
     } catch (e) {
       console.error('Erreur lecture base de données, réinitialisation:', e);
-      this.data = { users: [], resumes: [] };
+      this.data = { users: [], resumes: [], admin_audit_logs: [], events: [] };
       this.save();
     }
   }
@@ -121,6 +150,60 @@ class JsonDatabase {
     const deleted = this.data.resumes.length < initialLen;
     if (deleted) this.save();
     return deleted;
+  }
+
+  // Admin Audit Logs (Append-only & Immutable from UI)
+  createAuditLog(log: Omit<AdminAuditLogRow, 'id' | 'created_at'>): AdminAuditLogRow {
+    const entry: AdminAuditLogRow = {
+      id: crypto.randomUUID(),
+      action: log.action,
+      target_type: log.target_type,
+      target_id: log.target_id,
+      details: log.details,
+      created_at: new Date().toISOString(),
+    };
+    this.data.admin_audit_logs.push(entry);
+    this.save();
+    return entry;
+  }
+
+  getAuditLogs(limit = 200): AdminAuditLogRow[] {
+    return [...this.data.admin_audit_logs]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit);
+  }
+
+  // Events (Telemetry & Activity)
+  addEvent(event: Omit<EventRow, 'id' | 'created_at'>): EventRow {
+    const entry: EventRow = {
+      id: crypto.randomUUID(),
+      user_id: event.user_id,
+      session_id: event.session_id,
+      event_name: event.event_name,
+      properties: event.properties || {},
+      device_type: event.device_type || 'unknown',
+      country: event.country || 'Inconnu',
+      created_at: new Date().toISOString(),
+    };
+    this.data.events.push(entry);
+    this.save();
+    return entry;
+  }
+
+  getEvents(limit = 500): EventRow[] {
+    return [...this.data.events]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit);
+  }
+
+  // All Users (Admin only)
+  getAllUsers(): UserRow[] {
+    return [...this.data.users];
+  }
+
+  // All Resumes (Admin only)
+  getAllResumes(): ResumeRow[] {
+    return [...this.data.resumes];
   }
 }
 

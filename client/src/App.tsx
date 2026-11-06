@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AdminProvider, useAdmin } from './contexts/AdminContext';
 import { Navbar } from './components/common/Navbar';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { EditorView } from './components/editor/EditorView';
 import { AuthModal } from './components/auth/AuthModal';
 import { PrivacyView } from './components/legal/PrivacyView';
 import { TermsView } from './components/legal/TermsView';
+import { NotFoundView } from './components/common/NotFoundView';
+import { AdminLayout } from './components/admin/AdminLayout';
 import { ExternalLink } from 'lucide-react';
 
-type ViewMode = 'dashboard' | 'editor' | 'privacy' | 'terms';
+type ViewMode = 'dashboard' | 'editor' | 'privacy' | 'terms' | 'classs' | 'not_found';
 
 function getViewFromPath(pathname: string): ViewMode {
   const clean = pathname.toLowerCase().replace(/\/$/, '');
-  if (clean === '/privacy' || clean === '/confidentialite') {
-    return 'privacy';
-  }
-  if (clean === '/terms' || clean === '/conditions') {
-    return 'terms';
-  }
-  return 'dashboard';
+  if (!clean || clean === '') return 'dashboard';
+  if (clean === '/privacy' || clean === '/confidentialite') return 'privacy';
+  if (clean === '/terms' || clean === '/conditions') return 'terms';
+  if (clean === '/classs') return 'classs';
+  return 'not_found';
 }
 
 const AppContent: React.FC = () => {
-  const { isLoading } = useAuth();
+  const { isLoading: isAuthLoading } = useAuth();
+  const { isAdminAuthenticated, isLoading: isAdminLoading } = useAdmin();
+
   const [currentView, setCurrentView] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
       return getViewFromPath(window.location.pathname);
@@ -41,13 +44,27 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Set noindex, nofollow for /classs route
+  useEffect(() => {
+    if (currentView === 'classs') {
+      let meta = document.querySelector('meta[name="robots"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'robots');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', 'noindex, nofollow');
+    }
+  }, [currentView]);
+
   const navigateTo = (view: ViewMode) => {
     setCurrentView(view);
     if (typeof window !== 'undefined') {
       let targetPath = '/';
       if (view === 'privacy') targetPath = '/privacy';
       else if (view === 'terms') targetPath = '/terms';
-      
+      else if (view === 'classs') targetPath = '/classs';
+
       if (window.location.pathname !== targetPath) {
         window.history.pushState(null, '', targetPath);
       }
@@ -69,7 +86,7 @@ const AppContent: React.FC = () => {
     navigateTo('dashboard');
   };
 
-  if (isLoading) {
+  if (isAuthLoading || (currentView === 'classs' && isAdminLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-3">
@@ -78,6 +95,11 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Si on est sur /classs ET que l'administrateur est authentifié : afficher le tableau de bord admin
+  if (currentView === 'classs' && isAdminAuthenticated) {
+    return <AdminLayout />;
   }
 
   return (
@@ -91,7 +113,12 @@ const AppContent: React.FC = () => {
 
       {/* Main View */}
       <main className="flex-1">
-        {currentView === 'privacy' ? (
+        {currentView === 'classs' ? (
+          // Visiteur non autorisé ou non connecté sur /classs : réponse 404 trompeuse identique à une fausse page
+          <NotFoundView onGoHome={handleBackToDashboard} isClasssRoute={true} />
+        ) : currentView === 'not_found' ? (
+          <NotFoundView onGoHome={handleBackToDashboard} isClasssRoute={false} />
+        ) : currentView === 'privacy' ? (
           <PrivacyView onBack={handleBackToDashboard} />
         ) : currentView === 'terms' ? (
           <TermsView onBack={handleBackToDashboard} />
@@ -108,7 +135,7 @@ const AppContent: React.FC = () => {
         )}
       </main>
 
-      {/* FOOTER AVEC LIENS CONFIDENTIALITE & CONDITIONS ET SIGNATURE CLASS S */}
+      {/* FOOTER AVEC LIENS CONFIDENTIALITE & CONDITIONS ET SIGNATURE CLASS S (Aucun lien vers /classs) */}
       <footer className="no-print py-6 px-4 bg-white border-t border-slate-200 text-center text-xs text-slate-500 space-y-2">
         <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
           <a
@@ -161,7 +188,9 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <AdminProvider>
+        <AppContent />
+      </AdminProvider>
     </AuthProvider>
   );
 };

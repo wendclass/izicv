@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /classs
+Disallow: /api/admin
+Allow: /
