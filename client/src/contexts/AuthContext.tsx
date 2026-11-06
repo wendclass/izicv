@@ -19,26 +19,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('izicv_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isGuest, setIsGuest] = useState<boolean>(false);
+  const [isGuest, setIsGuest] = useState<boolean>(!localStorage.getItem('izicv_token'));
 
   useEffect(() => {
     async function loadUser() {
       const storedToken = localStorage.getItem('izicv_token');
-      const isGuestMode = localStorage.getItem('izicv_guest') === 'true';
-
-      if (isGuestMode) {
-        setIsGuest(true);
-        setUser({
-          id: 'guest-user',
-          email: 'invite@izicv.local',
-          fullName: 'Utilisateur Invité',
-          createdAt: new Date().toISOString(),
-        });
-        setIsLoading(false);
-        return;
-      }
 
       if (!storedToken) {
+        setIsGuest(true);
         setIsLoading(false);
         return;
       }
@@ -47,11 +35,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { user } = await api.getMe();
         setUser(user);
         setToken(storedToken);
+        setIsGuest(false);
       } catch (err) {
-        console.warn('Session expirée ou invalide:', err);
+        console.warn('Session expiree ou serveur injoignable, bascule en mode local:', err);
         localStorage.removeItem('izicv_token');
         setToken(null);
         setUser(null);
+        setIsGuest(true);
       } finally {
         setIsLoading(false);
       }
@@ -62,20 +52,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     localStorage.removeItem('izicv_guest');
-    setIsGuest(false);
     const result = await api.login({ email, password });
     localStorage.setItem('izicv_token', result.token);
     setToken(result.token);
     setUser(result.user);
+    setIsGuest(false);
   };
 
   const register = async (email: string, password: string, fullName: string) => {
     localStorage.removeItem('izicv_guest');
-    setIsGuest(false);
     const result = await api.register({ email, password, fullName });
     localStorage.setItem('izicv_token', result.token);
     setToken(result.token);
     setUser(result.user);
+    setIsGuest(false);
   };
 
   const logout = () => {
@@ -83,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('izicv_guest');
     setToken(null);
     setUser(null);
-    setIsGuest(false);
+    setIsGuest(true);
   };
 
   const guestLogin = () => {

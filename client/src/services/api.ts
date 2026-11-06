@@ -13,6 +13,29 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
+async function parseResponse<T = any>(res: Response, defaultError: string): Promise<T> {
+  const contentType = res.headers.get('content-type') || '';
+  let json: any = null;
+  if (contentType.includes('application/json')) {
+    try {
+      json = await res.json();
+    } catch {
+      json = null;
+    }
+  }
+
+  if (!res.ok) {
+    const errorMsg = json?.error || (res.status === 404 ? 'Service indisponible' : defaultError);
+    throw new Error(errorMsg);
+  }
+
+  if (json === null) {
+    throw new Error(defaultError);
+  }
+
+  return json as T;
+}
+
 export const api = {
   // Auth
   async register(data: { email: string; password: string; fullName: string }): Promise<{ token: string; user: User }> {
@@ -21,9 +44,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de l\'inscription');
-    return json;
+    return parseResponse(res, 'Erreur lors de l\'inscription');
   },
 
   async login(data: { email: string; password: string }): Promise<{ token: string; user: User }> {
@@ -32,18 +53,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de la connexion');
-    return json;
+    return parseResponse(res, 'Erreur lors de la connexion');
   },
 
   async getMe(): Promise<{ user: User }> {
     const res = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: getHeaders(),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur session');
-    return json;
+    return parseResponse(res, 'Erreur session');
   },
 
   // Resumes
@@ -51,8 +68,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/resumes`, {
       headers: getHeaders(),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors du chargement des CV');
+    const json = await parseResponse<{ resumes?: Resume[] }>(res, 'Erreur lors du chargement des CV');
     return json.resumes || [];
   },
 
@@ -60,8 +76,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/resumes/${id}`, {
       headers: getHeaders(),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors du chargement du CV');
+    const json = await parseResponse<{ resume: Resume }>(res, 'Erreur lors du chargement du CV');
     return json.resume;
   },
 
@@ -76,8 +91,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de la création du CV');
+    const json = await parseResponse<{ resume: Resume }>(res, 'Erreur lors de la creation du CV');
     return json.resume;
   },
 
@@ -95,9 +109,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de la mise à jour du CV');
-    return json;
+    return parseResponse(res, 'Erreur lors de la mise a jour du CV');
   },
 
   async duplicateResume(id: string): Promise<{ newId: string }> {
@@ -105,9 +117,7 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de la duplication du CV');
-    return json;
+    return parseResponse(res, 'Erreur lors de la duplication du CV');
   },
 
   async deleteResume(id: string): Promise<void> {
@@ -115,7 +125,6 @@ export const api = {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Erreur lors de la suppression du CV');
+    await parseResponse(res, 'Erreur lors de la suppression du CV');
   },
 };

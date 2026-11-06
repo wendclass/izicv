@@ -76,7 +76,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
   // Load resumes from API or local storage
   const loadResumes = async () => {
     setLoading(true);
-    if (isGuest) {
+    const isLocalUser = isGuest || !user;
+
+    if (isLocalUser) {
       const keys = Object.keys(localStorage).filter((k) => k.startsWith('izicv_resume_'));
       const list: Resume[] = [];
       for (const key of keys) {
@@ -117,7 +119,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
           setResumes(data);
         }
       } catch (err) {
-        console.error('Erreur chargement CVs:', err);
+        console.warn('Erreur chargement CV distants, bascule locale:', err);
+        const keys = Object.keys(localStorage).filter((k) => k.startsWith('izicv_resume_'));
+        const list: Resume[] = [];
+        for (const key of keys) {
+          try {
+            const item = JSON.parse(localStorage.getItem(key) || '{}');
+            if (item.id) list.push(item);
+          } catch {}
+        }
+        setResumes(list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
       }
     }
     setLoading(false);
@@ -134,7 +145,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
     // Mark that user has created a CV to trigger PWA banner on next return
     localStorage.setItem('izicv_has_created_cv', 'true');
 
-    if (isGuest) {
+    const isLocalUser = isGuest || !user;
+
+    if (isLocalUser) {
       const newId = 'local-' + Date.now();
       const newResume: Resume = {
         id: newId,
@@ -160,13 +173,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         setResumes([created, ...resumes]);
         onOpenEditor(created.id);
       } catch (err: any) {
-        alert(err.message || 'Erreur lors de la création du CV');
+        console.warn('Creation distante echouee, repli local immediat:', err);
+        const newId = 'local-' + Date.now();
+        const newResume: Resume = {
+          id: newId,
+          userId: user?.id || 'guest',
+          title,
+          templateId,
+          theme: { primaryColor: '#0d9488', fontFamily: 'inter' },
+          data: initialData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(`izicv_resume_${newId}`, JSON.stringify(newResume));
+        setResumes([newResume, ...resumes]);
+        onOpenEditor(newId);
       }
     }
   };
 
   const handleDuplicate = async (id: string) => {
-    if (isGuest) {
+    const isLocalItem = isGuest || !user || id.startsWith('local-');
+
+    if (isLocalItem) {
       const source = resumes.find((r) => r.id === id);
       if (!source) return;
       const newId = 'local-' + Date.now();
@@ -184,13 +213,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         await api.duplicateResume(id);
         await loadResumes();
       } catch (err: any) {
-        alert(err.message || 'Erreur lors de la duplication');
+        console.warn('Duplication distante echouee, repli local:', err);
+        const source = resumes.find((r) => r.id === id);
+        if (source) {
+          const newId = 'local-' + Date.now();
+          const duplicate: Resume = {
+            ...source,
+            id: newId,
+            title: `${source.title} (Copie)`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          localStorage.setItem(`izicv_resume_${newId}`, JSON.stringify(duplicate));
+          setResumes([duplicate, ...resumes]);
+        }
       }
     }
   };
 
   const handleRename = async (id: string, newTitle: string) => {
-    if (isGuest) {
+    const isLocalItem = isGuest || !user || id.startsWith('local-');
+
+    if (isLocalItem) {
       const updated = resumes.map((r) =>
         r.id === id ? { ...r, title: newTitle, updatedAt: new Date().toISOString() } : r
       );
@@ -208,17 +252,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
           )
         );
       } catch (err: any) {
-        alert(err.message || 'Erreur renommage');
+        console.warn('Renommage distant echoue, mise a jour locale:', err);
+        const updated = resumes.map((r) =>
+          r.id === id ? { ...r, title: newTitle, updatedAt: new Date().toISOString() } : r
+        );
+        setResumes(updated);
+        const target = updated.find((r) => r.id === id);
+        if (target) {
+          localStorage.setItem(`izicv_resume_${id}`, JSON.stringify(target));
+        }
       }
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Es-tu sûr de vouloir supprimer ce CV ? Cette action est irréversible.')) {
+    if (!window.confirm('Es-tu sur de vouloir supprimer ce CV ? Cette action est irreversible.')) {
       return;
     }
 
-    if (isGuest) {
+    const isLocalItem = isGuest || !user || id.startsWith('local-');
+
+    if (isLocalItem) {
       localStorage.removeItem(`izicv_resume_${id}`);
       setResumes(resumes.filter((r) => r.id !== id));
     } else {
@@ -226,7 +280,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         await api.deleteResume(id);
         setResumes(resumes.filter((r) => r.id !== id));
       } catch (err: any) {
-        alert(err.message || 'Erreur suppression');
+        console.warn('Suppression distante echouee, suppression locale:', err);
+        localStorage.removeItem(`izicv_resume_${id}`);
+        setResumes(resumes.filter((r) => r.id !== id));
       }
     }
   };

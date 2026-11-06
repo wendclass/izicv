@@ -1,9 +1,14 @@
 import path from 'path';
 import fs from 'fs';
 
-const dataDir = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const isVercel = Boolean(process.env.VERCEL);
+const dataDir = isVercel ? path.join('/tmp', 'data') : path.resolve(process.cwd(), 'data');
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn('Impossible de creer dataDir:', e);
 }
 
 const dbFilePath = path.join(dataDir, 'database.json');
