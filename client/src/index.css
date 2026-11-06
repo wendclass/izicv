@@ -8,7 +8,7 @@
   }
 }
 
-/* Custom scrollbar */
+/* Barre de défilement discrète */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -24,7 +24,7 @@
   background: #94a3b8;
 }
 
-/* A4 Sheet Dimensions & Print Optimization */
+/* Dimensions de feuille A4 pour l'écran */
 .a4-sheet {
   width: 210mm;
   min-height: 297mm;
@@ -32,11 +32,24 @@
   box-sizing: border-box;
 }
 
+/* Règles d'impression W3C CSS Paged Media (Section 4.1 & 4.4) */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
 @media print {
-  body {
-    background: transparent !important;
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
+    color: #0f172a !important;
   }
 
   .no-print {
@@ -48,21 +61,26 @@
   }
 
   .a4-sheet {
-    width: 210mm !important;
-    height: 297mm !important;
-    min-height: 297mm !important;
-    max-height: 297mm !important;
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 0 !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
   }
 
-  @page {
-    size: A4 portrait;
-    margin: 0;
+  .avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .avoid-break-after {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Support anti-coupure des liens et listes */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
   }
 }

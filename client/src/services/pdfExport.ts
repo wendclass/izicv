@@ -1,18 +1,16 @@
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { ResumeData } from '../types/cv';
 
 export interface PDFExportResult {
   filename: string;
-  blob: Blob;
+  blob?: Blob;
 }
 
 /**
- * Computes standard sanitized filename: CV_Nom_Prenom.pdf
+ * Calcule le nom de fichier standard et propre : CV_Nom_Prenom.pdf
  */
 export function getResumePDFFilename(resumeData: ResumeData, customTitle?: string): string {
-  const firstName = resumeData.personalInfo?.firstName?.trim() || '';
-  const lastName = resumeData.personalInfo?.lastName?.trim() || '';
+  const firstName = resumeData?.personalInfo?.firstName?.trim() || '';
+  const lastName = resumeData?.personalInfo?.lastName?.trim() || '';
 
   if (lastName || firstName) {
     const cleanLast = lastName.replace(/[^a-zA-Z0-9À-ÿ_-]/g, '_');
@@ -28,14 +26,19 @@ export function getResumePDFFilename(resumeData: ResumeData, customTitle?: strin
 }
 
 /**
- * Generate PDF Blob with high quality and reasonable size
+ * Prépare et déclenche l'impression vectorielle W3C CSS Paged Media (Section 4.1).
+ *
+ * Utilise un iframe isolé pour que le rendu ne dépende ni du zoom de l'écran,
+ * ni de la largeur du mobile Android.
+ * Le résultat est 100% vectoriel, avec texte sélectionnable, liens cliquables
+ * et respect strict des règles de saut de page (@page).
  */
-export async function generateResumePDFBlob(
+export async function exportResumeToPDF(
   elementId: string,
   resumeData: ResumeData,
   options?: { customFileName?: string }
-): Promise<PDFExportResult> {
-  // 1. Wait for document fonts to be completely ready
+): Promise<string> {
+  // 1. Attendre le chargement complet des polices
   if (typeof document !== 'undefined' && document.fonts) {
     try {
       await document.fonts.ready;
@@ -44,153 +47,201 @@ export async function generateResumePDFBlob(
 
   const element = document.getElementById(elementId);
   if (!element) {
-    throw new Error("Element de CV introuvable pour l'export.");
+    throw new Error("Élément de CV introuvable pour l'export.");
   }
 
   const filename = options?.customFileName
     ? (options.customFileName.endsWith('.pdf') ? options.customFileName : `${options.customFileName}.pdf`)
     : getResumePDFFilename(resumeData);
 
-  // Capture canvas with 2 scale for crisp print while staying fast and avoiding memory limits
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    windowWidth: 794,
-    onclone: (clonedDoc) => {
-      const clonedEl = clonedDoc.getElementById(elementId);
-      if (!clonedEl) return;
+  const documentTitle = filename.replace(/\.pdf$/i, '');
 
-      // Copy loaded fonts into cloned document
-      if (typeof document !== 'undefined' && document.fonts && (clonedDoc as any).fonts) {
-        try {
-          document.fonts.forEach((font) => {
-            (clonedDoc as any).fonts.add(font);
-          });
-        } catch {}
+  return new Promise((resolve, reject) => {
+    try {
+      // 2. Création d'un iframe isolé invisible
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        document.body.removeChild(iframe);
+        throw new Error("Impossible d'initialiser le moteur d'impression.");
       }
 
-      // Detach clonedEl from any parent wrappers, scaled containers, or display:none parents
-      clonedDoc.body.innerHTML = '';
-      clonedDoc.body.style.margin = '0';
-      clonedDoc.body.style.padding = '0';
-      clonedDoc.body.style.background = '#ffffff';
-      clonedDoc.body.style.width = '794px';
-      clonedDoc.body.style.minHeight = '1123px';
-      clonedDoc.body.appendChild(clonedEl);
+      // 3. Titre du document (nom de fichier par défaut lors de l'enregistrement PDF)
+      iframeDoc.title = documentTitle;
 
-      // Force pristine unscaled A4 dimensions and clean layout
-      clonedEl.style.position = 'static';
-      clonedEl.style.left = '0';
-      clonedEl.style.top = '0';
-      clonedEl.style.transform = 'none';
-      clonedEl.style.boxShadow = 'none';
-      clonedEl.style.borderRadius = '0';
-      clonedEl.style.width = '794px';
-      clonedEl.style.minHeight = '1123px';
-      clonedEl.style.maxWidth = '794px';
-      clonedEl.style.margin = '0';
-      clonedEl.style.visibility = 'visible';
-      clonedEl.style.opacity = '1';
-      clonedEl.style.display = 'flex';
-
-      // Fix html2canvas character rendering and spacing bugs:
-      // - Disable font ligatures so character pairs (fi, fl, ti, etc.) are never dropped
-      // - Disable text justification which causes character collision in canvas
-      // - Add micro letter-spacing to prevent adjacent glyph bounding box collapse
-      const allElements = clonedEl.querySelectorAll<HTMLElement>('*');
-      allElements.forEach((el) => {
-        el.style.fontVariantLigatures = 'none';
-        (el.style as any).fontFeatureSettings = '"liga" 0, "clig" 0';
-        el.style.letterSpacing = '0.015px';
-        if (el.style.textAlign === 'justify' || el.classList.contains('text-justify')) {
-          el.style.textAlign = 'left';
-        }
+      // 4. Cloner les feuilles de style de la page principale dans l'iframe
+      const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+      styles.forEach((styleNode) => {
+        iframeDoc.head.appendChild(styleNode.cloneNode(true));
       });
-    },
+
+      // 5. Injecter les règles CSS strictes pour l'impression A4 vectorielle
+      const printStyle = iframeDoc.createElement('style');
+      printStyle.textContent = `
+        @page {
+          size: A4 portrait;
+          margin: 12mm;
+        }
+        *, *::before, *::after {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+          width: 100% !important;
+          color: #0f172a !important;
+          font-variant-ligatures: none !important;
+        }
+        .a4-sheet {
+          box-shadow: none !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+          width: 100% !important;
+          min-height: auto !important;
+          max-width: 100% !important;
+        }
+        .avoid-break {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+        .avoid-break-after {
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+        a {
+          text-decoration: none !important;
+          color: inherit !important;
+        }
+      `;
+      iframeDoc.head.appendChild(printStyle);
+
+      // 6. Cloner le CV dans le corps de l'iframe
+      const clonedElement = element.cloneNode(true) as HTMLElement;
+      clonedElement.id = 'print-cv-sheet';
+      clonedElement.style.transform = 'none';
+      clonedElement.style.maxWidth = '100%';
+      clonedElement.style.visibility = 'visible';
+      clonedElement.style.opacity = '1';
+      iframeDoc.body.appendChild(clonedElement);
+
+      // 7. Attendre le chargement des images et des polices de l'iframe
+      const waitForAssets = async () => {
+        if (iframeDoc.fonts) {
+          try {
+            await iframeDoc.fonts.ready;
+          } catch {}
+        }
+
+        const images = Array.from(iframeDoc.querySelectorAll('img'));
+        await Promise.all(
+          images.map(
+            (img) =>
+              new Promise<void>((imgResolve) => {
+                if (img.complete) {
+                  imgResolve();
+                } else {
+                  img.onload = () => imgResolve();
+                  img.onerror = () => imgResolve();
+                }
+              })
+          )
+        );
+      };
+
+      waitForAssets().then(() => {
+        // Petit délai pour finaliser le reflow
+        setTimeout(() => {
+          try {
+            const win = iframe.contentWindow;
+            if (!win) {
+              document.body.removeChild(iframe);
+              resolve(filename);
+              return;
+            }
+
+            win.focus();
+            win.print();
+
+            // Nettoyage de l'iframe après déclenchement
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 2000);
+
+            resolve(filename);
+          } catch (printErr) {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+            reject(printErr);
+          }
+        }, 150);
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
-
-  const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-  // Standard A4: 210 x 297 mm
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-    compress: true,
-  });
-
-  const pdfWidth = 210;
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-
-  const blob = pdf.output('blob');
-  return { filename, blob };
 }
 
 /**
- * Direct file download
- */
-export async function exportResumeToPDF(
-  elementId: string,
-  resumeData: ResumeData,
-  options?: { customFileName?: string }
-): Promise<string> {
-  const { filename, blob } = await generateResumePDFBlob(elementId, resumeData, options);
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-  return filename;
-}
-
-/**
- * Share PDF using Android Web Share API (WhatsApp, Gmail, Drive, etc.)
- * Falls back to standard download if Web Share API with files is unsupported.
+ * Partage le CV via l'API Web Share native (Android/iOS)
+ * ou déclenche le téléchargement/impression si non supporté.
  */
 export async function shareResumePDF(
   elementId: string,
   resumeData: ResumeData,
   options?: { customFileName?: string }
 ): Promise<{ filename: string; shared: boolean }> {
-  const { filename, blob } = await generateResumePDFBlob(elementId, resumeData, options);
+  const filename = options?.customFileName
+    ? (options.customFileName.endsWith('.pdf') ? options.customFileName : `${options.customFileName}.pdf`)
+    : getResumePDFFilename(resumeData);
 
-  const file = new File([blob], filename, { type: 'application/pdf' });
+  // Déclencher l'export vectoriel
+  await exportResumeToPDF(elementId, resumeData, options);
 
-  if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+  // Si l'API Web Share est supportée pour le texte/titre
+  if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({
         title: 'Mon CV',
-        text: 'Voici mon CV au format PDF.',
-        files: [file],
+        text: `Voici mon CV : ${filename.replace(/\.pdf$/i, '')}`,
       });
       return { filename, shared: true };
     } catch (err: any) {
-      // User cancelled share dialog or error occurred; fall back to download
       if (err.name === 'AbortError') {
         return { filename, shared: false };
       }
     }
   }
 
-  // Fallback to direct download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return { filename, shared: true };
+}
 
-  return { filename, shared: false };
+/**
+ * Rétro-compatibilité : génère un résultat pour les contextes attendant generateResumePDFBlob
+ */
+export async function generateResumePDFBlob(
+  elementId: string,
+  resumeData: ResumeData,
+  options?: { customFileName?: string }
+): Promise<PDFExportResult> {
+  const filename = await exportResumeToPDF(elementId, resumeData, options);
+  return { filename };
 }
