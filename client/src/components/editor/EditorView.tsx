@@ -10,6 +10,7 @@ import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { SAMPLE_RESUME_DATA } from '../../data/sampleData';
 import { saveResumeToDrive } from '../../services/googleDrive';
+import { trackEvent } from '../../services/telemetry';
 import {
   Eye,
   Download,
@@ -275,6 +276,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
     };
     setResume(updated);
     triggerAutoSave(updated);
+    trackEvent('modele_change', { cvId: resume.id, templateId: newTemplate });
   };
 
   const handleThemeChange = (newTheme: ResumeTheme) => {
@@ -286,6 +288,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
     };
     setResume(updated);
     triggerAutoSave(updated);
+    trackEvent('couleur_change', { cvId: resume.id, themeColor: newTheme.primaryColor });
   };
 
   // Download PDF with visible toast confirmation

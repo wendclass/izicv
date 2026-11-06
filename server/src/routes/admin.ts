@@ -340,6 +340,184 @@ router.post('/log-action', adminAuthMiddleware, (req: AdminRequest, res: Respons
   res.json({ success: true });
 });
 
+// GET /api/admin/overview (Section 4.1 Vue d'ensemble)
+router.get('/overview', adminAuthMiddleware, (req: AdminRequest, res: Response): void => {
+  const period = (req.query.period as string) || '30d';
+
+  db.createAuditLog({
+    action: 'view_overview',
+    target_type: 'statistics',
+    details: `Consultation de la vue d'ensemble (période: ${period})`,
+  });
+
+  const users = db.getAllUsers();
+  const resumes = db.getAllResumes();
+  const events = db.getEvents(1000);
+
+  // Compute period start timestamp
+  const now = Date.now();
+  let periodStart = 0;
+  let daysCount = 30;
+
+  if (period === '7d') {
+    periodStart = now - 7 * 24 * 3600 * 1000;
+    daysCount = 7;
+  } else if (period === '30d') {
+    periodStart = now - 30 * 24 * 3600 * 1000;
+    daysCount = 30;
+  } else if (period === '90d') {
+    periodStart = now - 90 * 24 * 3600 * 1000;
+    daysCount = 90;
+  } else {
+    periodStart = 0;
+    daysCount = 90;
+  }
+
+  // Filtered by period
+  const newUsersInPeriod = users.filter((u) => new Date(u.created_at).getTime() >= periodStart).length;
+  const periodEvents = events.filter((e) => new Date(e.created_at).getTime() >= periodStart);
+  const resumesInPeriod = resumes.filter((r) => new Date(r.created_at).getTime() >= periodStart).length;
+
+  // Active users in period: distinct user_id who logged in or generated activity
+  const activeUserIds = new Set<string>();
+  periodEvents.forEach((e) => {
+    if (e.user_id) activeUserIds.add(e.user_id);
+  });
+  users.forEach((u) => {
+    if (u.derniere_connexion && new Date(u.derniere_connexion).getTime() >= periodStart) {
+      activeUserIds.add(u.id);
+    }
+  });
+
+  // PDF Exports and Shares
+  const totalPdfExports = events.filter((e) => e.event_name === 'pdf_telecharge').length;
+  const pdfExportsInPeriod = periodEvents.filter((e) => e.event_name === 'pdf_telecharge').length;
+  const pdfShares = events.filter((e) => e.event_name === 'pdf_partage').length;
+  const pwaInstalls = events.filter((e) => e.event_name === 'pwa_installee').length;
+  const exportErrors = events.filter((e) => e.event_name === 'erreur_export').length;
+
+  // Conversion Funnel:
+  // Inscrits -> ont créé au moins 1 CV -> ont exporté un PDF
+  const usersWithCv = users.filter((u) => resumes.some((r) => r.user_id === u.id)).length;
+  const userIdsWithExport = new Set(
+    events.filter((e) => e.event_name === 'pdf_telecharge' && e.user_id).map((e) => e.user_id)
+  );
+  const usersWithExport = users.filter((u) => userIdsWithExport.has(u.id)).length;
+
+  const totalRegistered = users.length;
+  const rateCreateCv = totalRegistered > 0 ? Math.round((usersWithCv / totalRegistered) * 100) : 0;
+  const rateExportPdf = totalRegistered > 0 ? Math.round((usersWithExport / totalRegistered) * 100) : 0;
+
+  // Daily signups for the chart
+  const dailyMap: Record<string, number> = {};
+  for (let i = daysCount - 1; i >= 0; i--) {
+    const d = new Date(now - i * 24 * 3600 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    dailyMap[key] = 0;
+  }
+  users.forEach((u) => {
+    const key = u.created_at.slice(0, 10);
+    if (dailyMap[key] !== undefined) {
+      dailyMap[key] += 1;
+    }
+  });
+  const dailySignups = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
+
+  // Breakdowns
+  // 1. Template
+  const templateCounts: Record<string, number> = {
+    'modern-sidebar': 0,
+    'minimalist-clean': 0,
+  };
+  resumes.forEach((r) => {
+    const t = r.template_id || 'modern-sidebar';
+    templateCounts[t] = (templateCounts[t] || 0) + 1;
+  });
+
+  // 2. Colors
+  const colorCounts: Record<string, number> = {};
+  resumes.forEach((r) => {
+    const c = r.theme_color || '#0d9488';
+    colorCounts[c] = (colorCounts[c] || 0) + 1;
+  });
+
+  // 3. Devices
+  const deviceCounts: Record<string, number> = { android: 0, ios: 0, desktop: 0 };
+  events.forEach((e) => {
+    if (e.device_type && e.device_type !== 'unknown') {
+      deviceCounts[e.device_type] = (deviceCounts[e.device_type] || 0) + 1;
+    }
+  });
+
+  // 4. Countries
+  const countryCounts: Record<string, number> = {};
+  events.forEach((e) => {
+    if (e.country && e.country !== 'Inconnu') {
+      countryCounts[e.country] = (countryCounts[e.country] || 0) + 1;
+    }
+  });
+
+  res.json({
+    metrics: {
+      totalUsers: totalRegistered,
+      newUsersInPeriod,
+      activeUsers: activeUserIds.size,
+      totalResumes: resumes.length,
+      resumesInPeriod,
+      totalPdfExports,
+      pdfExportsInPeriod,
+      pdfShares,
+      pwaInstalls,
+      exportErrors,
+    },
+    funnel: {
+      totalRegistered,
+      usersWithCv,
+      usersWithExport,
+      rateCreateCv,
+      rateExportPdf,
+    },
+    dailySignups,
+    breakdowns: {
+      templates: templateCounts,
+      colors: colorCounts,
+      devices: deviceCounts,
+      countries: countryCounts,
+    },
+  });
+});
+
+// GET /api/admin/activity (Section 4.4 Flux chronologique et erreurs d'export)
+router.get('/activity', adminAuthMiddleware, (req: AdminRequest, res: Response): void => {
+  const { type, userId, exportErrorsOnly } = req.query;
+
+  db.createAuditLog({
+    action: 'view_activity',
+    target_type: 'activity',
+    details: 'Consultation du flux d activité',
+  });
+
+  let events = db.getEvents(500);
+
+  if (exportErrorsOnly === 'true') {
+    events = events.filter((e) => e.event_name === 'erreur_export');
+  } else if (type && typeof type === 'string' && type !== 'all') {
+    events = events.filter((e) => e.event_name === type);
+  }
+
+  if (userId && typeof userId === 'string') {
+    events = events.filter((e) => e.user_id === userId);
+  }
+
+  // Count of export errors
+  const exportErrorsCount = db.getEvents(500).filter((e) => e.event_name === 'erreur_export').length;
+
+  res.json({
+    events,
+    exportErrorsCount,
+  });
+});
+
 // GET /api/admin/settings
 router.get('/settings', adminAuthMiddleware, (req: AdminRequest, res: Response) => {
   res.json({

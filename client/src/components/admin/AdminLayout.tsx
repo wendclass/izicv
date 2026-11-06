@@ -16,19 +16,21 @@ import { useAdmin } from '../../contexts/AdminContext';
 import { AuditLogSection } from './AuditLogSection';
 import { UsersListSection } from './UsersListSection';
 import { UserDetailSection } from './UserDetailSection';
+import { OverviewSection } from './OverviewSection';
+import { ActivitySection } from './ActivitySection';
 
 type AdminSection = 'overview' | 'users' | 'activity' | 'audit' | 'settings';
 
 export const AdminLayout: React.FC = () => {
   const { adminEmail, logout } = useAdmin();
-  const [currentSection, setCurrentSection] = useState<AdminSection>('users');
+  const [currentSection, setCurrentSection] = useState<AdminSection>('overview');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard, phase: 'Phase 3' },
+    { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard, phase: 'Actif' },
     { id: 'users', label: 'Utilisateurs', icon: Users, phase: 'Actif' },
-    { id: 'activity', label: 'Activité', icon: Activity, phase: 'Phase 3' },
+    { id: 'activity', label: 'Activité', icon: Activity, phase: 'Actif' },
     { id: 'audit', label: "Journal d'audit", icon: ShieldAlert, phase: 'Actif' },
     { id: 'settings', label: 'Réglages', icon: Settings, phase: 'Actif' },
   ];
@@ -191,27 +193,7 @@ export const AdminLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 p-4 sm:p-8 max-w-6xl mx-auto w-full">
-        {currentSection === 'audit' && <AuditLogSection />}
-
-        {currentSection === 'overview' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Vue d'ensemble</h2>
-                <p className="text-xs sm:text-sm text-slate-500">Statistiques globales, taux de passage et croissance.</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
-              <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-700">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-800">Module prévu pour la Phase 3</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                La table des événements et les cartes de métriques clés (utilisateurs, CV créés, exports PDF, graphiques de répartition) seront activées dès la validation de la Phase 1 et 2.
-              </p>
-            </div>
-          </div>
-        )}
+        {currentSection === 'overview' && <OverviewSection />}
 
         {currentSection === 'users' && (
           selectedUserId ? (
@@ -229,25 +211,9 @@ export const AdminLayout: React.FC = () => {
           )
         )}
 
-        {currentSection === 'activity' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Activité en direct</h2>
-                <p className="text-xs sm:text-sm text-slate-500">Flux d'événements et diagnostic des erreurs d'export.</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
-              <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-700">
-                <Activity className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-800">Module prévu pour la Phase 3</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Le flux chronologique des événements de l'application et les alertes d'erreurs PDF seront connectés avec la télémétrie.
-              </p>
-            </div>
-          </div>
-        )}
+        {currentSection === 'activity' && <ActivitySection />}
+
+        {currentSection === 'audit' && <AuditLogSection />}
 
         {currentSection === 'settings' && (
           <div className="space-y-6">

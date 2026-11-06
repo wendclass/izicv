@@ -6,6 +6,7 @@ import {
   getSavedGoogleAccessToken,
   GoogleUserProfile,
 } from '../services/googleDrive';
+import { trackEvent } from '../services/telemetry';
 
 interface AuthContextType {
   user: User | null;
@@ -98,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsGoogleDriveConnected(true);
     setIsGuest(false);
     localStorage.removeItem('izicv_guest');
+    trackEvent('connexion', { method: 'google' }, googleUser.id);
   };
 
   const login = async (email: string, password: string) => {
@@ -107,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(result.token);
     setUser(result.user);
     setIsGuest(false);
+    trackEvent('connexion', { method: 'email' }, result.user?.id);
   };
 
   const register = async (email: string, password: string, fullName: string) => {
@@ -116,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(result.token);
     setUser(result.user);
     setIsGuest(false);
+    trackEvent('inscription', { method: 'email' }, result.user?.id);
   };
 
   const logout = () => {

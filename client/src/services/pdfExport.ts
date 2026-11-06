@@ -1,4 +1,5 @@
 import { ResumeData } from '../types/cv';
+import { trackEvent } from './telemetry';
 
 export interface PDFExportResult {
   filename: string;
@@ -185,16 +186,19 @@ export async function exportResumeToPDF(
               }
             }, 2000);
 
+            trackEvent('pdf_telecharge', { cvId: (resumeData as any)?.id });
             resolve(filename);
-          } catch (printErr) {
+          } catch (printErr: any) {
             if (document.body.contains(iframe)) {
               document.body.removeChild(iframe);
             }
+            trackEvent('erreur_export', { errorCode: 'PRINT_ERR', errorMessage: printErr?.message || String(printErr) });
             reject(printErr);
           }
         }, 150);
       });
-    } catch (err) {
+    } catch (err: any) {
+      trackEvent('erreur_export', { errorCode: 'SETUP_ERR', errorMessage: err?.message || String(err) });
       reject(err);
     }
   });
@@ -223,6 +227,7 @@ export async function shareResumePDF(
         title: 'Mon CV',
         text: `Voici mon CV : ${filename.replace(/\.pdf$/i, '')}`,
       });
+      trackEvent('pdf_partage', { cvId: (resumeData as any)?.id });
       return { filename, shared: true };
     } catch (err: any) {
       if (err.name === 'AbortError') {

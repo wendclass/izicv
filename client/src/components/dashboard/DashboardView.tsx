@@ -11,6 +11,7 @@ import {
   saveResumeToDrive,
   deleteResumeFromDrive,
 } from '../../services/googleDrive';
+import { trackEvent } from '../../services/telemetry';
 import { ModernSidebarTemplate } from '../../templates/ModernSidebarTemplate';
 import { MinimalistCleanTemplate } from '../../templates/MinimalistCleanTemplate';
 import {
@@ -215,6 +216,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         );
       }
       setResumes([newResume, ...resumes]);
+      trackEvent('cv_cree', { cvId: newId, templateId });
       onOpenEditor(newId);
     } else {
       try {
@@ -225,6 +227,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
           data: initialData,
         });
         setResumes([created, ...resumes]);
+        trackEvent('cv_cree', { cvId: created.id, templateId });
         onOpenEditor(created.id);
       } catch (err: any) {
         console.warn('Creation distante echouee, repli local immediat:', err);
