@@ -9,6 +9,7 @@ import { MinimalistCleanTemplate } from '../../templates/MinimalistCleanTemplate
 import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { SAMPLE_RESUME_DATA } from '../../data/sampleData';
+import { saveResumeToDrive } from '../../services/googleDrive';
 import {
   Eye,
   Download,
@@ -27,7 +28,7 @@ interface EditorViewProps {
 }
 
 export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashboard }) => {
-  const { isGuest } = useAuth();
+  const { isGuest, isGoogleDriveConnected, googleAccessToken } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatusType>('saved');
@@ -212,7 +213,9 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
 
       const syncFn = async () => {
         try {
-          if (!isGuest && !resumeId.startsWith('local-')) {
+          if (isGoogleDriveConnected && googleAccessToken) {
+            await saveResumeToDrive(googleAccessToken, updatedResume);
+          } else if (!isGuest && !resumeId.startsWith('local-')) {
             await api.updateResume(resumeId, {
               title: updatedResume.title,
               templateId: updatedResume.templateId,
@@ -223,7 +226,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
           pendingSyncRef.current = false;
           setSaveStatus('saved');
         } catch (err) {
-          console.error('Erreur sauvegarde réseau:', err);
+          console.error('Erreur sauvegarde réseau / Google Drive:', err);
           if (!navigator.onLine) {
             setSaveStatus('offline');
           } else {
@@ -238,7 +241,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
         saveTimeoutRef.current = setTimeout(syncFn, 700);
       }
     },
-    [isGuest, resumeId]
+    [isGuest, resumeId, isGoogleDriveConnected, googleAccessToken]
   );
 
   const handleDataChange = (newData: ResumeData) => {
@@ -412,6 +415,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
         isDownloading={isDownloading}
         onSharePDF={handleSharePDF}
         isSharing={isSharing}
+        isGoogleDriveConnected={isGoogleDriveConnected}
       />
 
       {/* Toast Notification Banner (Ton CV est prêt : CV_Nom_Prenom.pdf) */}

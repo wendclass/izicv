@@ -33,6 +33,7 @@ interface EditorToolbarProps {
   isDownloading: boolean;
   onSharePDF?: () => void;
   isSharing?: boolean;
+  isGoogleDriveConnected?: boolean;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -49,6 +50,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   isDownloading,
   onSharePDF,
   isSharing = false,
+  isGoogleDriveConnected = false,
 }) => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -104,7 +106,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               {saveStatus === 'saved' && (
                 <div className="flex items-center gap-1 text-emerald-700 font-medium">
                   <CheckCircle className="w-3 h-3 text-emerald-600" />
-                  <span className="hidden md:inline">Enregistré</span>
+                  <span className="hidden md:inline">
+                    {isGoogleDriveConnected ? 'Enregistré sur Google Drive' : 'Enregistré'}
+                  </span>
                 </div>
               )}
               {saveStatus === 'offline' && (

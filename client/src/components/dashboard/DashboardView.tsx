@@ -6,6 +6,11 @@ import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { SAMPLE_RESUME_DATA, EMPTY_RESUME_DATA } from '../../data/sampleData';
 import { exportResumeToPDF } from '../../services/pdfExport';
+import {
+  listResumesFromDrive,
+  saveResumeToDrive,
+  deleteResumeFromDrive,
+} from '../../services/googleDrive';
 import { ModernSidebarTemplate } from '../../templates/ModernSidebarTemplate';
 import { MinimalistCleanTemplate } from '../../templates/MinimalistCleanTemplate';
 import {
@@ -28,7 +33,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOpenAuth }) => {
-  const { user, isGuest } = useAuth();
+  const { user, isGuest, isGoogleDriveConnected, googleAccessToken } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,9 +78,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
     setShowInstallBanner(false);
   };
 
-  // Load resumes from API or local storage
+  // Load resumes from Google Drive, API or local storage
   const loadResumes = async () => {
     setLoading(true);
+
+    // 1. Si connecté à Google Drive : charger depuis le Drive personnel de l'utilisateur
+    if (isGoogleDriveConnected && googleAccessToken) {
+      try {
+        const driveResumes = await listResumesFromDrive(googleAccessToken);
+        const keys = Object.keys(localStorage).filter((k) => k.startsWith('izicv_resume_'));
+        const localList: Resume[] = [];
+        for (const key of keys) {
+          try {
+            const item = JSON.parse(localStorage.getItem(key) || '{}');
+            if (item.id) localList.push(item);
+          } catch {}
+        }
+
+        const mergedMap = new Map<string, Resume>();
+        localList.forEach((r) => mergedMap.set(r.id, r));
+        driveResumes.forEach((r) => mergedMap.set(r.id, r));
+        const merged = Array.from(mergedMap.values());
+
+        if (merged.length === 0) {
+          const sampleCV: Resume = {
+            id: 'drive-' + Date.now(),
+            userId: user?.id || 'google-user',
+            title: 'Mon Premier CV Professionnel',
+            templateId: 'modern-sidebar',
+            theme: { primaryColor: '#0d9488', fontFamily: 'inter' },
+            data: SAMPLE_RESUME_DATA,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          localStorage.setItem(`izicv_resume_${sampleCV.id}`, JSON.stringify(sampleCV));
+          saveResumeToDrive(googleAccessToken, sampleCV).catch(() => {});
+          merged.push(sampleCV);
+        }
+
+        setResumes(merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+        setLoading(false);
+        return;
+      } catch (err) {
+        console.warn('Erreur chargement Google Drive, repli local:', err);
+      }
+    }
+
+    // 2. Mode local ou invité
     const isLocalUser = isGuest || !user;
 
     if (isLocalUser) {
@@ -136,7 +185,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
 
   useEffect(() => {
     loadResumes();
-  }, [user, isGuest]);
+  }, [user, isGuest, isGoogleDriveConnected, googleAccessToken]);
 
   const handleCreate = async (title: string, templateId: TemplateId, useSampleData: boolean) => {
     setIsCreateModalOpen(false);
@@ -160,6 +209,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem(`izicv_resume_${newId}`, JSON.stringify(newResume));
+      if (isGoogleDriveConnected && googleAccessToken) {
+        saveResumeToDrive(googleAccessToken, newResume).catch((err) =>
+          console.warn('Erreur sauvegarde Google Drive:', err)
+        );
+      }
       setResumes([newResume, ...resumes]);
       onOpenEditor(newId);
     } else {
@@ -207,6 +261,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem(`izicv_resume_${newId}`, JSON.stringify(duplicate));
+      if (isGoogleDriveConnected && googleAccessToken) {
+        saveResumeToDrive(googleAccessToken, duplicate).catch(() => {});
+      }
       setResumes([duplicate, ...resumes]);
     } else {
       try {
@@ -242,6 +299,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
       const target = updated.find((r) => r.id === id);
       if (target) {
         localStorage.setItem(`izicv_resume_${id}`, JSON.stringify(target));
+        if (isGoogleDriveConnected && googleAccessToken) {
+          saveResumeToDrive(googleAccessToken, target).catch(() => {});
+        }
       }
     } else {
       try {
@@ -274,6 +334,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
 
     if (isLocalItem) {
       localStorage.removeItem(`izicv_resume_${id}`);
+      if (isGoogleDriveConnected && googleAccessToken) {
+        deleteResumeFromDrive(googleAccessToken, id).catch(() => {});
+      }
       setResumes(resumes.filter((r) => r.id !== id));
     } else {
       try {

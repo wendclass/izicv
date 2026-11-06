@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { FileText, LogOut, User as UserIcon, Sparkles } from 'lucide-react';
+import { FileText, LogOut, User as UserIcon, Sparkles, Cloud } from 'lucide-react';
 
 interface NavbarProps {
   onOpenAuth?: () => void;
@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigateHome }) => {
-  const { user, logout, isGuest } = useAuth();
+  const { user, logout, isGuest, isGoogleDriveConnected } = useAuth();
 
   return (
     <header className="no-print bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
@@ -41,12 +41,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigateHome }) =>
         <div className="flex items-center gap-1.5 sm:gap-3">
           {user ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {isGuest && (
+              {isGoogleDriveConnected ? (
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full font-medium" title="Tes CV sont synchronisés sur ton Google Drive personnel">
+                  <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+                  Google Drive
+                </span>
+              ) : isGuest ? (
                 <span className="hidden sm:inline-flex items-center gap-1 text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-full">
                   <Sparkles className="w-3 h-3 text-amber-600" />
                   Mode Découverte
                 </span>
-              )}
+              ) : null}
 
               <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-700 bg-slate-50 px-2 sm:px-3 py-1.5 rounded-full border border-slate-200 max-w-[120px] sm:max-w-[180px]">
                 <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-800 font-bold text-[11px] flex items-center justify-center shrink-0">
