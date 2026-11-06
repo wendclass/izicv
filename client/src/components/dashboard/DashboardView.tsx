@@ -510,7 +510,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenEditor, onOp
 
       {/* Hidden Offscreen Container for Direct Dashboard PDF Export */}
       {exportingResume && (
-        <div className="fixed -left-[9999px] top-0 pointer-events-none">
+        <div
+          aria-hidden="true"
+          className="no-print"
+          style={{
+            position: 'fixed',
+            left: '-99999px',
+            top: 0,
+            width: '794px',
+            minHeight: '1123px',
+            transform: 'none',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: -9999,
+            overflow: 'hidden',
+          }}
+        >
           {exportingResume.templateId === 'minimalist-clean' ? (
             <MinimalistCleanTemplate
               data={exportingResume.data}

@@ -4,6 +4,8 @@ import { EditorToolbar, SaveStatusType } from './EditorToolbar';
 import { SectionManager } from './SectionManager';
 import { LivePreview } from '../preview/LivePreview';
 import { exportResumeToPDF, shareResumePDF } from '../../services/pdfExport';
+import { ModernSidebarTemplate } from '../../templates/ModernSidebarTemplate';
+import { MinimalistCleanTemplate } from '../../templates/MinimalistCleanTemplate';
 import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { SAMPLE_RESUME_DATA } from '../../data/sampleData';
@@ -288,7 +290,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
     if (!resume) return;
     setIsDownloading(true);
     try {
-      const filename = await exportResumeToPDF('editor-resume-preview', resume.data, {
+      const filename = await exportResumeToPDF('editor-resume-export-sheet', resume.data, {
         customFileName: resume.title ? `CV_${resume.title.replace(/\s+/g, '_')}` : undefined,
       });
       setToastMessage(`Ton CV est prêt : ${filename}`);
@@ -306,7 +308,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
     if (!resume) return;
     setIsSharing(true);
     try {
-      const { filename, shared } = await shareResumePDF('editor-resume-preview', resume.data, {
+      const { filename, shared } = await shareResumePDF('editor-resume-export-sheet', resume.data, {
         customFileName: resume.title ? `CV_${resume.title.replace(/\s+/g, '_')}` : undefined,
       });
       if (shared) {
@@ -515,7 +517,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
             data={resume.data}
             theme={resume.theme}
             templateId={resume.templateId}
-            previewElementId="editor-resume-preview"
+            previewElementId="editor-resume-desktop-preview"
           />
         </div>
       </div>
@@ -582,7 +584,7 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
                 data={resume.data}
                 theme={resume.theme}
                 templateId={resume.templateId}
-                previewElementId="editor-resume-preview"
+                previewElementId="editor-resume-mobile-preview"
               />
             </div>
           </div>
@@ -624,6 +626,38 @@ export const EditorView: React.FC<EditorViewProps> = ({ resumeId, onBackToDashbo
           </div>
         </div>
       )}
+
+      {/* DEDICATED OFFSCREEN UN-SCALED A4 CONTAINER FOR PDF EXPORT */}
+      <div
+        aria-hidden="true"
+        className="no-print"
+        style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: 0,
+          width: '794px',
+          minHeight: '1123px',
+          transform: 'none',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -9999,
+          overflow: 'hidden',
+        }}
+      >
+        {resume.templateId === 'minimalist-clean' ? (
+          <MinimalistCleanTemplate
+            data={resume.data}
+            theme={resume.theme}
+            id="editor-resume-export-sheet"
+          />
+        ) : (
+          <ModernSidebarTemplate
+            data={resume.data}
+            theme={resume.theme}
+            id="editor-resume-export-sheet"
+          />
+        )}
+      </div>
     </div>
   );
 };

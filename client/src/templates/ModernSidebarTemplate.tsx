@@ -10,7 +10,6 @@ import {
   Briefcase,
   GraduationCap,
   Award,
-  UserCheck,
   Sparkles,
   BookOpen,
 } from 'lucide-react';
@@ -34,19 +33,19 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
     <div className="space-y-2 text-xs opacity-95">
       {personalInfo.email && (
         <div className="flex items-center gap-2 break-all">
-          <Mail className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <Mail size={14} className="shrink-0 opacity-80" />
           <span>{personalInfo.email}</span>
         </div>
       )}
       {personalInfo.phone && (
         <div className="flex items-center gap-2">
-          <Phone className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <Phone size={14} className="shrink-0 opacity-80" />
           <span>{personalInfo.phone}</span>
         </div>
       )}
       {Boolean(personalInfo.city?.trim() || personalInfo.country?.trim()) && (
         <div className="flex items-center gap-2">
-          <MapPin className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <MapPin size={14} className="shrink-0 opacity-80" />
           <span>
             {[personalInfo.city?.trim(), personalInfo.country?.trim()].filter(Boolean).join(', ')}
           </span>
@@ -54,19 +53,19 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
       )}
       {personalInfo.linkedin && (
         <div className="flex items-center gap-2 break-all">
-          <Linkedin className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <Linkedin size={14} className="shrink-0 opacity-80" />
           <span>{personalInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</span>
         </div>
       )}
       {personalInfo.website && (
         <div className="flex items-center gap-2 break-all">
-          <Globe className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <Globe size={14} className="shrink-0 opacity-80" />
           <span>{personalInfo.website.replace(/^https?:\/\/(www\.)?/, '')}</span>
         </div>
       )}
       {personalInfo.github && (
         <div className="flex items-center gap-2 break-all">
-          <Github className="w-3.5 h-3.5 shrink-0 opacity-80" />
+          <Github size={14} className="shrink-0 opacity-80" />
           <span>{personalInfo.github.replace(/^https?:\/\/(www\.)?/, '')}</span>
         </div>
       )}
@@ -77,9 +76,9 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
     <div
       id={id}
       className={`a4-sheet bg-white text-slate-800 shadow-xl flex flex-row overflow-hidden relative ${fontFamilyClass}`}
-      style={{ minHeight: '297mm', width: '210mm' }}
+      style={{ minHeight: '297mm', width: '210mm', fontVariantLigatures: 'none' }}
     >
-      {/* LEFT SIDEBAR (35% width) */}
+      {/* LEFT SIDEBAR (34% width) */}
       <div
         className="w-[34%] shrink-0 text-white p-6 flex flex-col gap-6"
         style={{ backgroundColor: accentColor }}
@@ -210,10 +209,10 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                   className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 pb-1 border-b-2"
                   style={{ borderColor: accentColor, color: accentColor }}
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles size={14} />
                   Profil Professionnel
                 </h3>
-                <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line text-justify">
+                <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line text-left">
                   {profileSummary}
                 </p>
               </div>
@@ -228,7 +227,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                   className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 pb-1 border-b-2"
                   style={{ borderColor: accentColor, color: accentColor }}
                 >
-                  <Briefcase className="w-3.5 h-3.5" />
+                  <Briefcase size={14} />
                   Expériences Professionnelles
                 </h3>
                 <div className="space-y-3">
@@ -237,11 +236,13 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs font-bold text-slate-900">{exp.title}</span>
                         <span className="text-[10px] font-semibold text-slate-500">
-                          {exp.startDate} - {exp.current ? 'Présent' : exp.endDate || '-'}
+                          {exp.startDate ? `${exp.startDate} - ` : ''}
+                          {exp.current ? 'Présent' : exp.endDate || ''}
                         </span>
                       </div>
                       <div className="text-[11px] font-medium" style={{ color: accentColor }}>
-                        {exp.company} {exp.city ? `• ${exp.city}` : ''}
+                        <span>{exp.company}</span>
+                        {exp.city ? <span>{` • ${exp.city}`}</span> : null}
                       </div>
                       {exp.description && (
                         <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-line mt-1">
@@ -263,7 +264,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                   className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 pb-1 border-b-2"
                   style={{ borderColor: accentColor, color: accentColor }}
                 >
-                  <GraduationCap className="w-3.5 h-3.5" />
+                  <GraduationCap size={14} />
                   Formations & Diplômes
                 </h3>
                 <div className="space-y-2.5">
@@ -272,11 +273,13 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                       <div className="flex justify-between items-baseline">
                         <span className="text-xs font-bold text-slate-900">{edu.degree}</span>
                         <span className="text-[10px] font-semibold text-slate-500">
-                          {edu.startDate} - {edu.current ? 'En cours' : edu.endDate || '-'}
+                          {edu.startDate ? `${edu.startDate} - ` : ''}
+                          {edu.current ? 'En cours' : edu.endDate || ''}
                         </span>
                       </div>
                       <div className="text-[11px] font-medium text-slate-700">
-                        {edu.school} {edu.city ? `• ${edu.city}` : ''}
+                        <span>{edu.school}</span>
+                        {edu.city ? <span>{` • ${edu.city}`}</span> : null}
                       </div>
                       {edu.description && (
                         <p className="text-[10px] text-slate-600 italic mt-0.5">{edu.description}</p>
@@ -296,7 +299,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                   className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 pb-1 border-b-2"
                   style={{ borderColor: accentColor, color: accentColor }}
                 >
-                  <Award className="w-3.5 h-3.5" />
+                  <Award size={14} />
                   Certifications & Distinctions
                 </h3>
                 <div className="space-y-1.5">
@@ -304,7 +307,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                     <div key={cert.id} className="text-xs flex justify-between items-start">
                       <div>
                         <span className="font-bold text-slate-900">{cert.title}</span>
-                        <span className="text-slate-600 text-[11px]"> : {cert.issuer}</span>
+                        <span className="text-slate-600 text-[11px]">{cert.issuer ? ` : ${cert.issuer}` : ''}</span>
                         {cert.description && (
                           <div className="text-[10px] text-slate-500">{cert.description}</div>
                         )}
@@ -330,7 +333,7 @@ export const ModernSidebarTemplate: React.FC<TemplateProps> = ({ data, theme, id
                   className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 pb-1 border-b-2"
                   style={{ borderColor: accentColor, color: accentColor }}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <BookOpen size={14} />
                   {customSec.title}
                 </h3>
                 <div className="space-y-2">

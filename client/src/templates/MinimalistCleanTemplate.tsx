@@ -27,7 +27,7 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
     <div
       id={id}
       className={`a4-sheet bg-white text-slate-900 shadow-xl p-9 flex flex-col gap-5 overflow-hidden relative ${fontFamilyClass}`}
-      style={{ minHeight: '297mm', width: '210mm' }}
+      style={{ minHeight: '297mm', width: '210mm', fontVariantLigatures: 'none' }}
     >
       {/* HEADER SECTION */}
       <div className="flex items-center justify-between pb-4 border-b-2" style={{ borderColor: accentColor }}>
@@ -45,19 +45,19 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600 pt-2">
             {personalInfo.email && (
               <div className="flex items-center gap-1">
-                <Mail className="w-3 h-3" style={{ color: accentColor }} />
+                <Mail size={13} style={{ color: accentColor }} />
                 <span>{personalInfo.email}</span>
               </div>
             )}
             {personalInfo.phone && (
               <div className="flex items-center gap-1">
-                <Phone className="w-3 h-3" style={{ color: accentColor }} />
+                <Phone size={13} style={{ color: accentColor }} />
                 <span>{personalInfo.phone}</span>
               </div>
             )}
             {Boolean(personalInfo.city?.trim() || personalInfo.country?.trim()) && (
               <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" style={{ color: accentColor }} />
+                <MapPin size={13} style={{ color: accentColor }} />
                 <span>
                   {[personalInfo.city?.trim(), personalInfo.country?.trim()].filter(Boolean).join(', ')}
                 </span>
@@ -65,19 +65,19 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
             )}
             {personalInfo.linkedin && (
               <div className="flex items-center gap-1">
-                <Linkedin className="w-3 h-3" style={{ color: accentColor }} />
+                <Linkedin size={13} style={{ color: accentColor }} />
                 <span>{personalInfo.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</span>
               </div>
             )}
             {personalInfo.website && (
               <div className="flex items-center gap-1">
-                <Globe className="w-3 h-3" style={{ color: accentColor }} />
+                <Globe size={13} style={{ color: accentColor }} />
                 <span>{personalInfo.website.replace(/^https?:\/\/(www\.)?/, '')}</span>
               </div>
             )}
             {personalInfo.github && (
               <div className="flex items-center gap-1">
-                <Github className="w-3 h-3" style={{ color: accentColor }} />
+                <Github size={13} style={{ color: accentColor }} />
                 <span>{personalInfo.github.replace(/^https?:\/\/(www\.)?/, '')}</span>
               </div>
             )}
@@ -110,13 +110,11 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
         if (sectionKey === 'profile' && profileSummary) {
           return (
             <div key="profile" className="space-y-1.5">
-              <h3
-                className="text-xs font-bold uppercase tracking-widest text-slate-800 flex items-center gap-2"
-              >
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
                 Profil & Objectifs
               </h3>
-              <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line text-justify pl-4 border-l border-slate-200">
+              <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-line text-left pl-4 border-l border-slate-200">
                 {profileSummary}
               </p>
             </div>
@@ -137,11 +135,13 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs font-bold text-slate-900">{exp.title}</span>
                       <span className="text-[10px] font-semibold text-slate-500">
-                        {exp.startDate} - {exp.current ? 'Présent' : exp.endDate || '-'}
+                        {exp.startDate ? `${exp.startDate} - ` : ''}
+                        {exp.current ? 'Présent' : exp.endDate || ''}
                       </span>
                     </div>
                     <div className="text-[11px] font-semibold" style={{ color: accentColor }}>
-                      {exp.company} {exp.city ? `• ${exp.city}` : ''}
+                      <span>{exp.company}</span>
+                      {exp.city ? <span>{` • ${exp.city}`}</span> : null}
                     </div>
                     {exp.description && (
                       <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-line mt-1">
@@ -169,11 +169,13 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs font-bold text-slate-900">{edu.degree}</span>
                       <span className="text-[10px] font-semibold text-slate-500">
-                        {edu.startDate} - {edu.current ? 'En cours' : edu.endDate || '-'}
+                        {edu.startDate ? `${edu.startDate} - ` : ''}
+                        {edu.current ? 'En cours' : edu.endDate || ''}
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-700 font-medium">
-                      {edu.school} {edu.city ? `• ${edu.city}` : ''}
+                      <span>{edu.school}</span>
+                      {edu.city ? <span>{` • ${edu.city}`}</span> : null}
                     </div>
                     {edu.description && (
                       <p className="text-[10px] text-slate-600 italic">{edu.description}</p>
@@ -240,7 +242,7 @@ export const MinimalistCleanTemplate: React.FC<TemplateProps> = ({ data, theme, 
                   <div key={cert.id} className="flex justify-between items-start text-xs">
                     <div>
                       <span className="font-bold text-slate-900">{cert.title}</span>
-                      <span className="text-slate-600 text-[11px]"> : {cert.issuer}</span>
+                      <span className="text-slate-600 text-[11px]">{cert.issuer ? ` : ${cert.issuer}` : ''}</span>
                       {cert.description && (
                         <div className="text-[10px] text-slate-500">{cert.description}</div>
                       )}

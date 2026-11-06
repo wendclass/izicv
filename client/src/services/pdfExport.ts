@@ -35,18 +35,25 @@ export async function generateResumePDFBlob(
   resumeData: ResumeData,
   options?: { customFileName?: string }
 ): Promise<PDFExportResult> {
+  // 1. Wait for document fonts to be completely ready
+  if (typeof document !== 'undefined' && document.fonts) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
+
   const element = document.getElementById(elementId);
   if (!element) {
-    throw new Error("Élément de CV introuvable pour l'export.");
+    throw new Error("Element de CV introuvable pour l'export.");
   }
 
   const filename = options?.customFileName
     ? (options.customFileName.endsWith('.pdf') ? options.customFileName : `${options.customFileName}.pdf`)
     : getResumePDFFilename(resumeData);
 
-  // Capture canvas with 2.2 scale for crisp print while staying under 1MB
+  // Capture canvas with 2 scale for crisp print while staying fast and avoiding memory limits
   const canvas = await html2canvas(element, {
-    scale: 2.2,
+    scale: 2,
     useCORS: true,
     allowTaint: true,
     logging: false,
@@ -54,17 +61,58 @@ export async function generateResumePDFBlob(
     windowWidth: 794,
     onclone: (clonedDoc) => {
       const clonedEl = clonedDoc.getElementById(elementId);
-      if (clonedEl) {
-        clonedEl.style.transform = 'none';
-        clonedEl.style.boxShadow = 'none';
-        clonedEl.style.borderRadius = '0';
-        clonedEl.style.width = '794px';
-        clonedEl.style.minHeight = '1123px';
+      if (!clonedEl) return;
+
+      // Copy loaded fonts into cloned document
+      if (typeof document !== 'undefined' && document.fonts && (clonedDoc as any).fonts) {
+        try {
+          document.fonts.forEach((font) => {
+            (clonedDoc as any).fonts.add(font);
+          });
+        } catch {}
       }
+
+      // Detach clonedEl from any parent wrappers, scaled containers, or display:none parents
+      clonedDoc.body.innerHTML = '';
+      clonedDoc.body.style.margin = '0';
+      clonedDoc.body.style.padding = '0';
+      clonedDoc.body.style.background = '#ffffff';
+      clonedDoc.body.style.width = '794px';
+      clonedDoc.body.style.minHeight = '1123px';
+      clonedDoc.body.appendChild(clonedEl);
+
+      // Force pristine unscaled A4 dimensions and clean layout
+      clonedEl.style.position = 'static';
+      clonedEl.style.left = '0';
+      clonedEl.style.top = '0';
+      clonedEl.style.transform = 'none';
+      clonedEl.style.boxShadow = 'none';
+      clonedEl.style.borderRadius = '0';
+      clonedEl.style.width = '794px';
+      clonedEl.style.minHeight = '1123px';
+      clonedEl.style.maxWidth = '794px';
+      clonedEl.style.margin = '0';
+      clonedEl.style.visibility = 'visible';
+      clonedEl.style.opacity = '1';
+      clonedEl.style.display = 'flex';
+
+      // Fix html2canvas character rendering and spacing bugs:
+      // - Disable font ligatures so character pairs (fi, fl, ti, etc.) are never dropped
+      // - Disable text justification which causes character collision in canvas
+      // - Add micro letter-spacing to prevent adjacent glyph bounding box collapse
+      const allElements = clonedEl.querySelectorAll<HTMLElement>('*');
+      allElements.forEach((el) => {
+        el.style.fontVariantLigatures = 'none';
+        (el.style as any).fontFeatureSettings = '"liga" 0, "clig" 0';
+        el.style.letterSpacing = '0.015px';
+        if (el.style.textAlign === 'justify' || el.classList.contains('text-justify')) {
+          el.style.textAlign = 'left';
+        }
+      });
     },
   });
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.94);
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
   // Standard A4: 210 x 297 mm
   const pdf = new jsPDF({
@@ -122,7 +170,7 @@ export async function shareResumePDF(
     try {
       await navigator.share({
         title: 'Mon CV',
-        text: 'Voici mon CV en format PDF.',
+        text: 'Voici mon CV au format PDF.',
         files: [file],
       });
       return { filename, shared: true };
