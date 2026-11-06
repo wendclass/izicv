@@ -118,8 +118,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Brand header */}
         <div className="text-center space-y-1 pt-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 mb-2 shadow-xs">
-            <Sparkles className="w-6 h-6" />
+          <div className="inline-flex items-center justify-center mb-2">
+            <img src="/favicon.svg" alt="iziCV" className="w-12 h-12 rounded-2xl shadow-md shadow-teal-500/20" />
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900">
             {isResetMode

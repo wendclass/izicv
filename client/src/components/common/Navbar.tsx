@@ -19,9 +19,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, onNavigateHome }) =>
           onClick={onNavigateHome}
           className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group shrink-0"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-teal-700 to-teal-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20 group-hover:scale-105 transition-transform shrink-0">
-            <FileText className="w-5 h-5" />
-          </div>
+          <img
+            src="/favicon.svg"
+            alt="iziCV Logo"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-md shadow-teal-500/20 group-hover:scale-105 transition-transform shrink-0"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-teal-700 to-teal-500 bg-clip-text text-transparent">

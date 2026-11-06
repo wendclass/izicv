@@ -1,26 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/common/Navbar';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { EditorView } from './components/editor/EditorView';
 import { AuthModal } from './components/auth/AuthModal';
+import { PrivacyView } from './components/legal/PrivacyView';
+import { TermsView } from './components/legal/TermsView';
 import { ExternalLink } from 'lucide-react';
 
+type ViewMode = 'dashboard' | 'editor' | 'privacy' | 'terms';
+
+function getViewFromPath(pathname: string): ViewMode {
+  const clean = pathname.toLowerCase().replace(/\/$/, '');
+  if (clean === '/privacy' || clean === '/confidentialite') {
+    return 'privacy';
+  }
+  if (clean === '/terms' || clean === '/conditions') {
+    return 'terms';
+  }
+  return 'dashboard';
+}
+
 const AppContent: React.FC = () => {
-  const { user, isLoading } = useAuth();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'editor'>('dashboard');
+  const { isLoading } = useAuth();
+  const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined') {
+      return getViewFromPath(window.location.pathname);
+    }
+    return 'dashboard';
+  });
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Sync with browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentView(getViewFromPath(window.location.pathname));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (view: ViewMode) => {
+    setCurrentView(view);
+    if (typeof window !== 'undefined') {
+      let targetPath = '/';
+      if (view === 'privacy') targetPath = '/privacy';
+      else if (view === 'terms') targetPath = '/terms';
+      
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleOpenEditor = (resumeId: string) => {
     setActiveResumeId(resumeId);
     setCurrentView('editor');
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToDashboard = () => {
     setActiveResumeId(null);
-    setCurrentView('dashboard');
+    navigateTo('dashboard');
   };
 
   if (isLoading) {
@@ -38,19 +84,18 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
       {/* Global Navbar */}
       <Navbar
-        currentView={currentView}
+        currentView={currentView === 'editor' ? 'editor' : 'dashboard'}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onNavigateHome={handleBackToDashboard}
       />
 
       {/* Main View */}
       <main className="flex-1">
-        {currentView === 'dashboard' ? (
-          <DashboardView
-            onOpenEditor={handleOpenEditor}
-            onOpenAuth={() => setIsAuthModalOpen(true)}
-          />
-        ) : activeResumeId ? (
+        {currentView === 'privacy' ? (
+          <PrivacyView onBack={handleBackToDashboard} />
+        ) : currentView === 'terms' ? (
+          <TermsView onBack={handleBackToDashboard} />
+        ) : currentView === 'editor' && activeResumeId ? (
           <EditorView
             resumeId={activeResumeId}
             onBackToDashboard={handleBackToDashboard}
@@ -63,21 +108,45 @@ const AppContent: React.FC = () => {
         )}
       </main>
 
-      {/* CLASS S SIGNATURE FOOTER (Section 11) */}
-      {/* Logo Class S : emplacement réservé */}
-      <footer className="no-print py-4 px-4 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
-        <span>Un outil signé </span>
-        <span className="font-semibold text-slate-700">Class S</span>
-        <span>, </span>
-        <a
-          href="https://wendclass.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-teal-700 hover:text-teal-800 hover:underline font-semibold inline-flex items-center gap-0.5"
-        >
-          wendclass.com
-          <ExternalLink className="w-3 h-3 ml-0.5" />
-        </a>
+      {/* FOOTER AVEC LIENS CONFIDENTIALITE & CONDITIONS ET SIGNATURE CLASS S */}
+      <footer className="no-print py-6 px-4 bg-white border-t border-slate-200 text-center text-xs text-slate-500 space-y-2">
+        <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateTo('privacy');
+            }}
+            className="text-slate-600 hover:text-teal-700 hover:underline font-medium transition-colors"
+          >
+            Règles de confidentialité
+          </a>
+          <span className="text-slate-300">•</span>
+          <a
+            href="/terms"
+            onClick={(e) => {
+              e.preventDefault();
+              navigateTo('terms');
+            }}
+            className="text-slate-600 hover:text-teal-700 hover:underline font-medium transition-colors"
+          >
+            Conditions d'utilisation
+          </a>
+        </nav>
+        <div>
+          <span>Un outil signé </span>
+          <span className="font-semibold text-slate-700">Class S</span>
+          <span>, </span>
+          <a
+            href="https://wendclass.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-teal-700 hover:text-teal-800 hover:underline font-semibold inline-flex items-center gap-0.5"
+          >
+            wendclass.com
+            <ExternalLink className="w-3 h-3 ml-0.5" />
+          </a>
+        </div>
       </footer>
 
       {/* Auth Modal */}
